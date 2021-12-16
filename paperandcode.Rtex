@@ -1,0 +1,1946 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\bibliographystyle{apalike}
+
+\title{Party People? Measuring Interest Groups' Proximity to Political Parties}
+\author{Amy D. Meli }
+\date{December 2021}
+
+\begin{document}
+
+   <<echo = FALSE, cache = TRUE, message=FALSE, warning=FALSE, results, 'hide', fig.show='hide'>>=
+   #Working directory and packages
+
+setwd("~/Documents/Grad School/Fall 2021 Classes/Final Paper")
+
+library(dplyr)
+library(ggplot2)
+library(MASS)
+library(stargazer)
+library(scales)
+library(pvsR)
+
+#First, I will create data for interest groups using three cycles of FEC data
+
+#2015-2016 data
+
+#Importing 2020 contributions data
+contributions2016 <- read.delim("itpas2.2016.txt", sep="|") 
+names(contributions2016) <- c("CommitteeID", "Amendment", "ReportType", "PrimaryGeneral", "Image", "TransactionType", "EntityType", "ContribName", "ContribCity", "ContribState", "ContribZip", "Employer", "Occupation", "TransactionDate", "TransactionAmt", "OtherID", "CandidateID", "TransactionID", "ReportID", "MemoCode", "MemoText", "SubID" )
+
+#Making a subset of contributions from only the PACs I care about:
+contribs2016subset<- subset(contributions2016, CommitteeID == "C90018227" | CommitteeID == "C00679860" | CommitteeID == "C00410126" | CommitteeID == "C90013285" | CommitteeID == "C00687103" | CommitteeID == "C00112680" | CommitteeID == "C00340356" | CommitteeID == "C00464453" | CommitteeID == "C00787697" | CommitteeID == "C00003806 " | CommitteeID == "C00264770" | CommitteeID == "C00035451" | CommitteeID == "C00516526" | CommitteeID == "C00293902"| CommitteeID == "C00436188"| CommitteeID == "C00486928"
+                            | CommitteeID == "C00382028"| CommitteeID == "C00053553"| CommitteeID == "C00480863"| CommitteeID == "C00541169"| CommitteeID == "C00781294"| CommitteeID == "C00487470"| CommitteeID == "C00342972"| CommitteeID == "C00435933" | CommitteeID == "C00196246" | CommitteeID == "C00338442" | CommitteeID == "C00357129" | CommitteeID == "C00024521" | CommitteeID == "C00198259" | CommitteeID == "C00358903" | CommitteeID == "C00005660" | CommitteeID == "C00343137" | CommitteeID == "C00016386" 
+                            | CommitteeID == "C00564799"| CommitteeID == "C70000716"| CommitteeID == "C90013301"| CommitteeID == "C00172296"| CommitteeID == "C00490987"| CommitteeID == "C00432260"| CommitteeID == "C00004275"| CommitteeID == "C00252338"| CommitteeID == "C00102764" | CommitteeID == "C00259572" | CommitteeID == "C00410084" | CommitteeID == "C00375360" | CommitteeID == "C00358812" | CommitteeID == "C00364158"| CommitteeID == "C00403881" | CommitteeID == "C00432823" | CommitteeID == "C00382424"
+                            | CommitteeID == "C00458042"| CommitteeID == "C00130658"| CommitteeID == "C00010868" | CommitteeID == "C00000729" | CommitteeID == "C00028860" | CommitteeID == "C00374363" | CommitteeID == "C00029348" | CommitteeID == "C00385740" | CommitteeID == "C00415026" | CommitteeID == "C00309146"| CommitteeID == "C00423228" | CommitteeID == "C00006080" 
+                            | CommitteeID == "C00573261"| CommitteeID == "C00001198" | CommitteeID == "C00139071" | CommitteeID == "C00077321" | CommitteeID == "C00495002" | CommitteeID == "C00295097" | CommitteeID == "C00012914" | CommitteeID == "C00000422" | CommitteeID == "C00638122" | CommitteeID == "C00017525" | CommitteeID == "C00089086" | CommitteeID == "C00024968" 
+                            | CommitteeID == "C00118430" | CommitteeID == "C00193854" | CommitteeID == "C00008839" | CommitteeID == "C00066472" | CommitteeID == "C00373696" | CommitteeID == "C00522094" | CommitteeID == "C00161570" | CommitteeID == "C00129932" | CommitteeID == "C00118208" | CommitteeID == "C00384602" | CommitteeID == "C00255752" 
+                            | CommitteeID == "C00171504" | CommitteeID == "C00734012" | CommitteeID == "C00245530" | CommitteeID == "C00114108" | CommitteeID == "C00210666" | CommitteeID == "C00359463" | CommitteeID == "C00002881"| CommitteeID == "C00691741"| CommitteeID == "C00114132"| CommitteeID == "C00259572"| CommitteeID == "C00351031"| CommitteeID == "C00336743"
+                            | CommitteeID == "C00010421"| CommitteeID == "C00082917"| CommitteeID == "C00383463"| CommitteeID == "C00588509"| CommitteeID == "C00410431"| CommitteeID == "C00280743"| CommitteeID == "C00442996"| CommitteeID == "C00375790"| CommitteeID == "C00250753"| CommitteeID == "C00193177"| CommitteeID == "C00355677"| CommitteeID == "C00587451"| CommitteeID == "C30003057"
+                            | CommitteeID == "C00528026"| CommitteeID == "C00435024"| CommitteeID == "C00274944"| CommitteeID == "C00002089"| CommitteeID == "C00495481"| CommitteeID == "C00035535"| CommitteeID == "C00375048"| CommitteeID == "C00387555"| CommitteeID == "C00391490"| CommitteeID == "C00498865"| CommitteeID == "C00007880"| CommitteeID == "C00150805"| CommitteeID == "C00262295"
+                            | CommitteeID == "C00001388"| CommitteeID == "C00744151"| CommitteeID == "C00503318"| CommitteeID == "C00452144"| CommitteeID == "C00783332"| CommitteeID == "C00030734"| CommitteeID == "C00103937"| CommitteeID == "C00095869"| CommitteeID == "C00548198"| CommitteeID == "C00193433"| CommitteeID == "C00458257"| CommitteeID == "C00702092"| CommitteeID == "C00439216"
+                            | CommitteeID == "C00442020"| CommitteeID == "C00471540"| CommitteeID == "C00452383"| CommitteeID == "C00193631"| CommitteeID == "C00164848"| CommitteeID == "C00085910"| CommitteeID == "C00373910"| CommitteeID == "C00278101"| CommitteeID == "C00486498"| CommitteeID == "C00453399"| CommitteeID == "C00235853"| CommitteeID == "C00466813"| CommitteeID == "C00787374"
+                            | CommitteeID == "C00032698"| CommitteeID == "C00332031"| CommitteeID == "C00508309"| CommitteeID == "C00419036"| CommitteeID == "C00144154"| CommitteeID == "C00027359"| CommitteeID == "C00007542"| CommitteeID == "C00457226"| CommitteeID == "C00005157"| CommitteeID == "C00027342"| CommitteeID == "C00217638"| CommitteeID == "C00128231"| CommitteeID == "C00383521"
+                            | CommitteeID == "C00084491"| CommitteeID == "C00387928"| CommitteeID == "C00000885"| CommitteeID == "C00116145"| CommitteeID == "C00007922"| CommitteeID == "C00217984"| CommitteeID == "C00252940"| CommitteeID == "C00520056"| CommitteeID == "C00043463"| CommitteeID == "C00389882"| CommitteeID == "C00241398"| CommitteeID == "C00291799"| CommitteeID == "C00319319"
+                            | CommitteeID == "C00004812"| CommitteeID == "C00139519"| CommitteeID == "C00079541"| CommitteeID == "C00607861"| CommitteeID == "C00238725"| CommitteeID == "C00113241"| CommitteeID == "C00528166"| CommitteeID == "C00481200"| CommitteeID == "C00431981"| CommitteeID == "C00022368"| CommitteeID == "C00126763"| CommitteeID == "C00415372"| CommitteeID == "C00040659"
+                            | CommitteeID == "C00283135"| CommitteeID == "C00000901"| CommitteeID == "C00420000"| CommitteeID == "C00254201"| CommitteeID == "C00170258"| CommitteeID == "C00092957"| CommitteeID == "C00303339"| CommitteeID == "C00030718"| CommitteeID == "C00060707"| CommitteeID == "C00349225"| CommitteeID == "C00109306"| CommitteeID == "C00517870"| CommitteeID == "C00484592"
+                            | CommitteeID == "C00319723"| CommitteeID == "C00030809"| CommitteeID == "C00376343"| CommitteeID == "C70000492"| CommitteeID == "C00113811"| CommitteeID == "C00002972"| CommitteeID == "C00101105"| CommitteeID == "C00609966"| CommitteeID == "C00508770"| CommitteeID == "C00039214"| CommitteeID == "C00245548"| CommitteeID == "C00325324"| CommitteeID == "C00304634"
+                            | CommitteeID == "C00542555"| CommitteeID == "C00092247"| CommitteeID == "C00345306"| CommitteeID == "C00763847"| CommitteeID == "C00003764"| CommitteeID == "C00040329"| CommitteeID == "C00111278"| CommitteeID == "C00521096"| CommitteeID == "C00002972"| CommitteeID == "C00090415"| CommitteeID == "C00089458"| CommitteeID == "C00107128"| CommitteeID == "C00004101"
+                            | CommitteeID == "C00150367"| CommitteeID == "C00297739"| CommitteeID == "C00383604"| CommitteeID == "C00239848"| CommitteeID == "C00393769"| CommitteeID == "C00445593"| CommitteeID == "C00021972"| CommitteeID == "C00314617"| CommitteeID == "C00309716"| CommitteeID == "C00457754"| CommitteeID == "C00018028"| CommitteeID == "C00363812"| CommitteeID == "C00648402"
+                            | CommitteeID == "C00112763"| CommitteeID == "C00752352"| CommitteeID == "C00166272"| CommitteeID == "C00633107"| CommitteeID == "C00326256"| CommitteeID == "C00004036"| CommitteeID == "C00457366"| CommitteeID == "C00613521"| CommitteeID == "C00135368"| CommitteeID == "C00325936"| CommitteeID == "C00421982"| CommitteeID == "C00300426"| CommitteeID == "C00126086"
+                            | CommitteeID == "C00332296"| CommitteeID == "C00575654"| CommitteeID == "C00570606"| CommitteeID == "C00475194"| CommitteeID == "C00008268"| CommitteeID == "C00082040"| CommitteeID == "C00631085"| CommitteeID == "C00684258"| CommitteeID == "C00004861"| CommitteeID == "C00012476"| CommitteeID == "C00331918"| CommitteeID == "C00002840"| CommitteeID == "C00002832"
+                            | CommitteeID == "C00040725"| CommitteeID == "C00013342"| CommitteeID == "C00003590"| CommitteeID == "C00755454"| CommitteeID == "C00372441"| CommitteeID == "C90017476"| CommitteeID == "C90016858"| CommitteeID == "C90017872"| CommitteeID == "C90017583"| CommitteeID == "C90011578"| CommitteeID == "C90017807"| CommitteeID == "C00505792"| CommitteeID == "C00488338"
+                            | CommitteeID == "C00157545"| CommitteeID == "C00692806"| CommitteeID == "C00358663"| CommitteeID == "C90013798"| CommitteeID == "C90020843"| CommitteeID == "C00583880"| CommitteeID == "C00595751"| CommitteeID == "C00685693"| CommitteeID == "C00488486"| CommitteeID == "C90015975"| CommitteeID == "C00531814"| CommitteeID == "C90014895"| CommitteeID == "C00572651"
+                            | CommitteeID == "C90020959"| CommitteeID == "C90011693"| CommitteeID == "C00508440"| CommitteeID == "C90009358"| CommitteeID == "C90004185"| CommitteeID == "C90016437"| CommitteeID == "C00488742"| CommitteeID == "C00109819"| CommitteeID == "C00509893"| CommitteeID == "C00623355"| CommitteeID == "C00489799"| CommitteeID == "C00523621"| CommitteeID == "C90011875"
+                            | CommitteeID == "C00483693"| CommitteeID == "C00688945"| CommitteeID == "C00727719"| CommitteeID == "C90013145"| CommitteeID == "C90015322"| CommitteeID == "C00759134"| CommitteeID == "C90013376"| CommitteeID == "C00627372"| CommitteeID == "C00528448"| CommitteeID == "C00489203"| CommitteeID == "C30002851"| CommitteeID == "C30002430"| CommitteeID == "C30002885"
+                            | CommitteeID == "C30001952"| CommitteeID == "C00760686"| CommitteeID == "C30002836"| CommitteeID == "C70005798"| CommitteeID == "C70006358"| CommitteeID == "C30003081"| CommitteeID == "C00030999"| CommitteeID == "C70004569"| CommitteeID == "C70006309"| CommitteeID == "C70004262"| CommitteeID == "C00738674"| CommitteeID == "C30001366"| CommitteeID == "C70002563"
+                            | CommitteeID == "C30000848"| CommitteeID == "C70006432"| CommitteeID == "C70004148"| CommitteeID == "C70001318"| CommitteeID == "C90011313"| CommitteeID == "C30001101"| CommitteeID == "C70006184"| CommitteeID == "C70005152",
+                            select=c(CommitteeID:SubID))
+
+#Need to merge interest group name into this list
+committees2020 <- read.csv("feccommittees20192020.csv") 
+
+#Need to 
+
+contribs2016cmtename<- contribs2016subset %>% 
+  left_join(committees2020, c("CommitteeID" = "CMTE_ID"))
+
+#Also need to join the party affiliation of the contribution recipient
+#Loading the candidates text file with this information
+
+candidates2016 <- read.delim("weball16.txt", sep="|") 
+names(candidates2016) <- c("CAND_ID", "CAND_NAME", "IncumbChallenger", "PartyCode", "PartyAffil", "TotalReceipts", "TransfersFrom", "Disbursements", "TransfersTo", "BeginCash", "EndCash", "CandCont", "CandLoans", "OtherLoans", "CandRepay", "OtherRepay", "DebtsOwedBy", "TotalIndCont", "CandState", "CandDist", "SpecialElect", "PrimaryElect", "RunoffElect", "GeneralElect", "GenElectPercent", "ContribOtherCmtes","ContribPartyCmtes", "CoverageEndDate", "RefundsInd", "RefundsCmtes")
+
+#Now join this file with the master file.
+contribs2016allfields<- contribs2016cmtename %>% 
+  left_join(candidates2016, c("CandidateID" = "CAND_ID"))
+
+#This is the list of contributions that I will use to build the ratios.
+
+#Fixing 24a contributions
+contribs2016fixed24a <- contribs2016allfields%>%
+  mutate(PartyAffil2 = case_when(
+    PartyAffil == "DEM" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "REP" & TransactionType == "24A" ~ "DEM",
+    PartyAffil == "DFL" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "DEM" & TransactionType != "24A" ~ "DEM",
+    PartyAffil == "REP" & TransactionType != "24A" ~ "REP",
+    PartyAffil == "DFL" & TransactionType != "24A" ~ "DEM",
+  ))
+
+#-----------------------------Building Ratios------------------------------------------
+
+table(contribs2016allfields$PartyAffil)
+table(contribs2016fixed24a$PartyAffil2)
+
+#First, I will subset the data by contributions to Democrats and contributions to Republicans
+contribs2016GOP<- subset(contribs2016fixed24a, PartyAffil2 == "REP",
+                         select=c(CommitteeID:PartyAffil2))
+
+contribs2016Dem<- subset(contribs2016fixed24a, PartyAffil2 == "DEM",
+                         select=c(CommitteeID:PartyAffil2))
+
+givingtotal2016GOP<- group_by(contribs2016GOP, CMTE_NM)%>%
+  summarise(totalGOP = sum(TransactionAmt))
+
+givingtotal2016Dem<- group_by(contribs2016Dem, CMTE_NM)%>%
+  summarise(totalDem = sum(TransactionAmt))
+
+#Now that I have the contribution totals by party, I will join these two dataframes so that I can figure out the ratios
+partyratios2016<- full_join(givingtotal2016GOP, givingtotal2016Dem)
+
+class(partyratios2016$CMTE_NM)
+
+#Need to replaces NAs with 0s
+partyratios2016$totalGOP[is.na(partyratios2016$totalGOP)] <- 0
+partyratios2016$totalDem[is.na(partyratios2016$totalDem)] <- 0
+
+#Adding a percent Republican field to the file above. Since 100=Republican in my scale, the higher number should indicate more support of Republicans
+partyratios2016<- partyratios2016%>%
+  mutate(partyratios2016, 
+         PercentRepublican = totalGOP/(totalGOP + totalDem),
+         ChamberPercentRepublican = .5639,
+         ChamberDiff = PercentRepublican - ChamberPercentRepublican)
+
+hist(partyratios2016$ChamberDiff)
+
+#Need to export list of PAC ratios to insert unique ID numbers
+write.csv(partyratios2016, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/partyratios2016.csv")
+
+#2017-2018 data
+
+#Importing contributions data
+contributions2018 <- read.delim("itpas2.2018.txt", sep="|") 
+names(contributions2018) <- c("CommitteeID", "Amendment", "ReportType", "PrimaryGeneral", "Image", "TransactionType", "EntityType", "ContribName", "ContribCity", "ContribState", "ContribZip", "Employer", "Occupation", "TransactionDate", "TransactionAmt", "OtherID", "CandidateID", "TransactionID", "ReportID", "MemoCode", "MemoText", "SubID" )
+
+#Making a subset of contributions from only the PACs I care about:
+contribs2018subset<- subset(contributions2018, CommitteeID == "C90018227" | CommitteeID == "C00410126" | CommitteeID == "C00679860" | CommitteeID == "C90013285" | CommitteeID == "C00687103" | CommitteeID == "C00112680" | CommitteeID == "C00340356" | CommitteeID == "C00464453" | CommitteeID == "C00787697" | CommitteeID == "C00003806 " | CommitteeID == "C00264770" | CommitteeID == "C00035451" | CommitteeID == "C00516526" | CommitteeID == "C00293902"| CommitteeID == "C00436188"| CommitteeID == "C00486928"
+                            | CommitteeID == "C00382028"| CommitteeID == "C70000716"| CommitteeID == "C00053553"| CommitteeID == "C00480863"| CommitteeID == "C00172296"| CommitteeID == "C00541169"| CommitteeID == "C00490987"| CommitteeID == "C00781294"| CommitteeID == "C00487470"| CommitteeID == "C00342972"| CommitteeID == "C00435933" | CommitteeID == "C00196246" | CommitteeID == "C00338442" | CommitteeID == "C00357129" | CommitteeID == "C00024521" | CommitteeID == "C00198259" | CommitteeID == "C00358903" | CommitteeID == "C00005660" | CommitteeID == "C00343137" | CommitteeID == "C00016386" 
+                            | CommitteeID == "C00564799"| CommitteeID == "C90013301"| CommitteeID == "C00432260"| CommitteeID == "C00004275"| CommitteeID == "C00252338"| CommitteeID == "C00102764" | CommitteeID == "C00259572" | CommitteeID == "C00410084" | CommitteeID == "C00375360" | CommitteeID == "C00358812" | CommitteeID == "C00364158"| CommitteeID == "C00403881" | CommitteeID == "C00432823" | CommitteeID == "C00382424"
+                            | CommitteeID == "C00458042"| CommitteeID == "C00130658"| CommitteeID == "C00010868" | CommitteeID == "C00000729" | CommitteeID == "C00028860" | CommitteeID == "C00374363" | CommitteeID == "C00029348" | CommitteeID == "C00385740" | CommitteeID == "C00415026" | CommitteeID == "C00309146"| CommitteeID == "C00423228" | CommitteeID == "C00006080" 
+                            | CommitteeID == "C00573261"| CommitteeID == "C00001198" | CommitteeID == "C00139071" | CommitteeID == "C00077321" | CommitteeID == "C00495002" | CommitteeID == "C00295097" | CommitteeID == "C00012914" | CommitteeID == "C00000422" | CommitteeID == "C00638122" | CommitteeID == "C00017525" | CommitteeID == "C00089086" | CommitteeID == "C00024968" 
+                            | CommitteeID == "C00118430" | CommitteeID == "C00193854" | CommitteeID == "C00008839" | CommitteeID == "C00066472" | CommitteeID == "C00373696" | CommitteeID == "C00522094" | CommitteeID == "C00161570" | CommitteeID == "C00129932" | CommitteeID == "C00118208" | CommitteeID == "C00384602" | CommitteeID == "C00255752" 
+                            | CommitteeID == "C00171504" | CommitteeID == "C00734012" | CommitteeID == "C00245530" | CommitteeID == "C00114108" | CommitteeID == "C00210666" | CommitteeID == "C00359463" | CommitteeID == "C00002881"| CommitteeID == "C00691741"| CommitteeID == "C00114132"| CommitteeID == "C00259572"| CommitteeID == "C00351031"| CommitteeID == "C00336743"
+                            | CommitteeID == "C00010421"| CommitteeID == "C00082917"| CommitteeID == "C00383463"| CommitteeID == "C00588509"| CommitteeID == "C00410431"| CommitteeID == "C00280743"| CommitteeID == "C00442996"| CommitteeID == "C00375790"| CommitteeID == "C00250753"| CommitteeID == "C00193177"| CommitteeID == "C00355677"| CommitteeID == "C00587451"| CommitteeID == "C30003057"
+                            | CommitteeID == "C00528026"| CommitteeID == "C00435024"| CommitteeID == "C00274944"| CommitteeID == "C00002089"| CommitteeID == "C00495481"| CommitteeID == "C00035535"| CommitteeID == "C00375048"| CommitteeID == "C00387555"| CommitteeID == "C00391490"| CommitteeID == "C00498865"| CommitteeID == "C00007880"| CommitteeID == "C00150805"| CommitteeID == "C00262295"
+                            | CommitteeID == "C00001388"| CommitteeID == "C00744151"| CommitteeID == "C00503318"| CommitteeID == "C00452144"| CommitteeID == "C00783332"| CommitteeID == "C00030734"| CommitteeID == "C00103937"| CommitteeID == "C00095869"| CommitteeID == "C00548198"| CommitteeID == "C00193433"| CommitteeID == "C00458257"| CommitteeID == "C00702092"| CommitteeID == "C00439216"
+                            | CommitteeID == "C00442020"| CommitteeID == "C00471540"| CommitteeID == "C00452383"| CommitteeID == "C00193631"| CommitteeID == "C00164848"| CommitteeID == "C00085910"| CommitteeID == "C00373910"| CommitteeID == "C00278101"| CommitteeID == "C00486498"| CommitteeID == "C00453399"| CommitteeID == "C00235853"| CommitteeID == "C00466813"| CommitteeID == "C00787374"
+                            | CommitteeID == "C00032698"| CommitteeID == "C00332031"| CommitteeID == "C00508309"| CommitteeID == "C00419036"| CommitteeID == "C00144154"| CommitteeID == "C00027359"| CommitteeID == "C00007542"| CommitteeID == "C00457226"| CommitteeID == "C00005157"| CommitteeID == "C00027342"| CommitteeID == "C00217638"| CommitteeID == "C00128231"| CommitteeID == "C00383521"
+                            | CommitteeID == "C00084491"| CommitteeID == "C00387928"| CommitteeID == "C00000885"| CommitteeID == "C00116145"| CommitteeID == "C00007922"| CommitteeID == "C00217984"| CommitteeID == "C00252940"| CommitteeID == "C00520056"| CommitteeID == "C00043463"| CommitteeID == "C00389882"| CommitteeID == "C00241398"| CommitteeID == "C00291799"| CommitteeID == "C00319319"
+                            | CommitteeID == "C00004812"| CommitteeID == "C00139519"| CommitteeID == "C00079541"| CommitteeID == "C00607861"| CommitteeID == "C00238725"| CommitteeID == "C00113241"| CommitteeID == "C00528166"| CommitteeID == "C00481200"| CommitteeID == "C00431981"| CommitteeID == "C00022368"| CommitteeID == "C00126763"| CommitteeID == "C00415372"| CommitteeID == "C00040659"
+                            | CommitteeID == "C00283135"| CommitteeID == "C00000901"| CommitteeID == "C00420000"| CommitteeID == "C00254201"| CommitteeID == "C00170258"| CommitteeID == "C00092957"| CommitteeID == "C00303339"| CommitteeID == "C00030718"| CommitteeID == "C00060707"| CommitteeID == "C00349225"| CommitteeID == "C00109306"| CommitteeID == "C00517870"| CommitteeID == "C00484592"
+                            | CommitteeID == "C00319723"| CommitteeID == "C00030809"| CommitteeID == "C00376343"| CommitteeID == "C70000492"| CommitteeID == "C00113811"| CommitteeID == "C00002972"| CommitteeID == "C00101105"| CommitteeID == "C00609966"| CommitteeID == "C00508770"| CommitteeID == "C00039214"| CommitteeID == "C00245548"| CommitteeID == "C00325324"| CommitteeID == "C00304634"
+                            | CommitteeID == "C00542555"| CommitteeID == "C00092247"| CommitteeID == "C00345306"| CommitteeID == "C00763847"| CommitteeID == "C00003764"| CommitteeID == "C00040329"| CommitteeID == "C00111278"| CommitteeID == "C00521096"| CommitteeID == "C00002972"| CommitteeID == "C00090415"| CommitteeID == "C00089458"| CommitteeID == "C00107128"| CommitteeID == "C00004101"
+                            | CommitteeID == "C00150367"| CommitteeID == "C00297739"| CommitteeID == "C00383604"| CommitteeID == "C00239848"| CommitteeID == "C00393769"| CommitteeID == "C00445593"| CommitteeID == "C00021972"| CommitteeID == "C00314617"| CommitteeID == "C00309716"| CommitteeID == "C00457754"| CommitteeID == "C00018028"| CommitteeID == "C00363812"| CommitteeID == "C00648402"
+                            | CommitteeID == "C00112763"| CommitteeID == "C00752352"| CommitteeID == "C00166272"| CommitteeID == "C00633107"| CommitteeID == "C00326256"| CommitteeID == "C00004036"| CommitteeID == "C00457366"| CommitteeID == "C00613521"| CommitteeID == "C00135368"| CommitteeID == "C00325936"| CommitteeID == "C00421982"| CommitteeID == "C00300426"| CommitteeID == "C00126086"
+                            | CommitteeID == "C00332296"| CommitteeID == "C00575654"| CommitteeID == "C00570606"| CommitteeID == "C00475194"| CommitteeID == "C00008268"| CommitteeID == "C00082040"| CommitteeID == "C00631085"| CommitteeID == "C00684258"| CommitteeID == "C00004861"| CommitteeID == "C00012476"| CommitteeID == "C00331918"| CommitteeID == "C00002840"| CommitteeID == "C00002832"
+                            | CommitteeID == "C00040725"| CommitteeID == "C00013342"| CommitteeID == "C00003590"| CommitteeID == "C00755454"| CommitteeID == "C00372441"| CommitteeID == "C90017476"| CommitteeID == "C90016858"| CommitteeID == "C90017872"| CommitteeID == "C90017583"| CommitteeID == "C90011578"| CommitteeID == "C90017807"| CommitteeID == "C00505792"| CommitteeID == "C00488338"
+                            | CommitteeID == "C00157545"| CommitteeID == "C00692806"| CommitteeID == "C00358663"| CommitteeID == "C90013798"| CommitteeID == "C90020843"| CommitteeID == "C00583880"| CommitteeID == "C00595751"| CommitteeID == "C00685693"| CommitteeID == "C00488486"| CommitteeID == "C90015975"| CommitteeID == "C00531814"| CommitteeID == "C90014895"| CommitteeID == "C00572651"
+                            | CommitteeID == "C90020959"| CommitteeID == "C90011693"| CommitteeID == "C00508440"| CommitteeID == "C90009358"| CommitteeID == "C90004185"| CommitteeID == "C90016437"| CommitteeID == "C00488742"| CommitteeID == "C00109819"| CommitteeID == "C00509893"| CommitteeID == "C00623355"| CommitteeID == "C00489799"| CommitteeID == "C00523621"| CommitteeID == "C90011875"
+                            | CommitteeID == "C00483693"| CommitteeID == "C00688945"| CommitteeID == "C00727719"| CommitteeID == "C90013145"| CommitteeID == "C90015322"| CommitteeID == "C00759134"| CommitteeID == "C90013376"| CommitteeID == "C00627372"| CommitteeID == "C00528448"| CommitteeID == "C00489203"| CommitteeID == "C30002851"| CommitteeID == "C30002430"| CommitteeID == "C30002885"
+                            | CommitteeID == "C30001952"| CommitteeID == "C00760686"| CommitteeID == "C30002836"| CommitteeID == "C70005798"| CommitteeID == "C70006358"| CommitteeID == "C30003081"| CommitteeID == "C00030999"| CommitteeID == "C70004569"| CommitteeID == "C70006309"| CommitteeID == "C70004262"| CommitteeID == "C00738674"| CommitteeID == "C30001366"| CommitteeID == "C70002563"
+                            | CommitteeID == "C30000848"| CommitteeID == "C70006432"| CommitteeID == "C70004148"| CommitteeID == "C70001318"| CommitteeID == "C90011313"| CommitteeID == "C30001101"| CommitteeID == "C70006184"| CommitteeID == "C70005152",
+                            select=c(CommitteeID:SubID))
+
+#Need to merge interest group name into this list
+committees2020 <- read.csv("feccommittees20192020.csv") 
+
+#Need to 
+
+contribs2018cmtename<- contribs2018subset %>% 
+  left_join(committees2020, c("CommitteeID" = "CMTE_ID"))
+
+#Also need to join the party affiliation of the contribution recipient
+#Loading the candidates text file with this information
+
+candidates2018 <- read.delim("weball18.txt", sep="|") 
+names(candidates2018) <- c("CAND_ID", "CAND_NAME", "IncumbChallenger", "PartyCode", "PartyAffil", "TotalReceipts", "TransfersFrom", "Disbursements", "TransfersTo", "BeginCash", "EndCash", "CandCont", "CandLoans", "OtherLoans", "CandRepay", "OtherRepay", "DebtsOwedBy", "TotalIndCont", "CandState", "CandDist", "SpecialElect", "PrimaryElect", "RunoffElect", "GeneralElect", "GenElectPercent", "ContribOtherCmtes","ContribPartyCmtes", "CoverageEndDate", "RefundsInd", "RefundsCmtes")
+
+#Now join this file with the master file.
+contribs2018allfields<- contribs2018cmtename %>% 
+  left_join(candidates2018, c("CandidateID" = "CAND_ID"))
+
+#This is the list of contributions that I will use to build the ratios.
+
+#Fixing 24a contributions
+contribs2018fixed24a <- contribs2018allfields%>%
+  mutate(PartyAffil2 = case_when(
+    PartyAffil == "DEM" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "REP" & TransactionType == "24A" ~ "DEM",
+    PartyAffil == "DFL" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "DEM" & TransactionType != "24A" ~ "DEM",
+    PartyAffil == "REP" & TransactionType != "24A" ~ "REP",
+    PartyAffil == "DFL" & TransactionType != "24A" ~ "DEM",
+  ))
+
+#-----------------------------Building Ratios------------------------------------------
+
+table(contribs2018allfields$PartyAffil)
+table(contribs2018fixed24a$PartyAffil2)
+
+#First, I will subset the data by contributions to Democrats and contributions to Republicans
+contribs2018GOP<- subset(contribs2018fixed24a, PartyAffil2 == "REP",
+                         select=c(CommitteeID:PartyAffil2))
+
+contribs2018Dem<- subset(contribs2018fixed24a, PartyAffil2 == "DEM",
+                         select=c(CommitteeID:PartyAffil2))
+
+givingtotal2018GOP<- group_by(contribs2018GOP, CMTE_NM)%>%
+  summarise(totalGOP = sum(TransactionAmt))
+
+givingtotal2018Dem<- group_by(contribs2018Dem, CMTE_NM)%>%
+  summarise(totalDem = sum(TransactionAmt))
+
+#Now that I have the contribution totals by party, I will join these two dataframes so that I can figure out the ratios
+partyratios2018<- full_join(givingtotal2018GOP, givingtotal2018Dem)
+
+class(partyratios2018$CMTE_NM)
+
+#Need to replaces NAs with 0s
+partyratios2018$totalGOP[is.na(partyratios2018$totalGOP)] <- 0
+partyratios2018$totalDem[is.na(partyratios2018$totalDem)] <- 0
+
+#Adding a percent Republican field to the file above. Since 100=Republican in my scale, the higher number should indicate more support of Republicans
+partyratios2018<- partyratios2018%>%
+  mutate(partyratios2018, 
+         PercentRepublican = totalGOP/(totalGOP + totalDem),
+         ChamberPercentRepublican = .5417,
+         ChamberDiff = PercentRepublican - ChamberPercentRepublican)
+
+hist(partyratios2018$ChamberDiff)
+
+
+#Need to export list of PAC ratios to insert unique ID numbers
+write.csv(partyratios2018, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/partyratios2018-2.csv")
+
+#Now 2019-2020 data
+
+contributions2020 <- read.delim("contributions2020.txt", sep="|") 
+names(contributions2020) <- c("CommitteeID", "Amendment", "ReportType", "PrimaryGeneral", "Image", "TransactionType", "EntityType", "ContribName", "ContribCity", "ContribState", "ContribZip", "Employer", "Occupation", "TransactionDate", "TransactionAmt", "OtherID", "CandidateID", "TransactionID", "ReportID", "MemoCode", "MemoText", "SubID" )
+
+#Making a subset of contributions from only the PACs I care about:
+contribs2020subset<- subset(contributions2020, CommitteeID == "C90018227" | CommitteeID == "C00410126" | CommitteeID == "C00679860" | CommitteeID == "C90013285" | CommitteeID == "C00687103" | CommitteeID == "C00112680" | CommitteeID == "C00340356" | CommitteeID == "C00464453" | CommitteeID == "C00787697" | CommitteeID == "C00003806 " | CommitteeID == "C00264770" | CommitteeID == "C00035451" | CommitteeID == "C00516526" | CommitteeID == "C00293902"| CommitteeID == "C00436188"| CommitteeID == "C00486928"
+                            | CommitteeID == "C00382028"| CommitteeID == "C70000716"| CommitteeID == "C00053553"| CommitteeID == "C00172296"| CommitteeID == "C00541169"| CommitteeID == "C00490987"| CommitteeID == "C00781294"| CommitteeID == "C00432260"| CommitteeID == "C00487470"| CommitteeID == "C00342972"| CommitteeID == "C00435933" | CommitteeID == "C00196246" | CommitteeID == "C00338442" | CommitteeID == "C00357129" | CommitteeID == "C00024521" | CommitteeID == "C00198259" | CommitteeID == "C00358903" | CommitteeID == "C00005660" | CommitteeID == "C00343137" | CommitteeID == "C00016386" 
+                            | CommitteeID == "C00564799"| CommitteeID == "C90013301"| CommitteeID == "C00480863"| CommitteeID == "C00004275"| CommitteeID == "C00252338"| CommitteeID == "C00102764" | CommitteeID == "C00259572" | CommitteeID == "C00410084" | CommitteeID == "C00375360" | CommitteeID == "C00358812" | CommitteeID == "C00364158"| CommitteeID == "C00403881" | CommitteeID == "C00432823" | CommitteeID == "C00382424"
+                            | CommitteeID == "C00573261"| CommitteeID == "C00458042"| CommitteeID == "C00130658"| CommitteeID == "C00010868" | CommitteeID == "C00000729" | CommitteeID == "C00028860" | CommitteeID == "C00374363" | CommitteeID == "C00029348" | CommitteeID == "C00385740" | CommitteeID == "C00415026" | CommitteeID == "C00309146"| CommitteeID == "C00423228" | CommitteeID == "C00006080" 
+                            | CommitteeID == "C00001198" | CommitteeID == "C00139071" | CommitteeID == "C00077321" | CommitteeID == "C00495002" | CommitteeID == "C00295097" | CommitteeID == "C00012914" | CommitteeID == "C00000422" | CommitteeID == "C00638122" | CommitteeID == "C00017525" | CommitteeID == "C00089086" | CommitteeID == "C00024968" 
+                            | CommitteeID == "C00118430" | CommitteeID == "C00193854" | CommitteeID == "C00008839" | CommitteeID == "C00066472" | CommitteeID == "C00373696" | CommitteeID == "C00522094" | CommitteeID == "C00161570" | CommitteeID == "C00129932" | CommitteeID == "C00118208" | CommitteeID == "C00384602" | CommitteeID == "C00255752" 
+                            | CommitteeID == "C00171504" | CommitteeID == "C00734012" | CommitteeID == "C00245530" | CommitteeID == "C00114108" | CommitteeID == "C00210666" | CommitteeID == "C00359463" | CommitteeID == "C00002881"| CommitteeID == "C00691741"| CommitteeID == "C00114132"| CommitteeID == "C00259572"| CommitteeID == "C00351031"| CommitteeID == "C00336743"
+                            | CommitteeID == "C00010421"| CommitteeID == "C00082917"| CommitteeID == "C00383463"| CommitteeID == "C00588509"| CommitteeID == "C00410431"| CommitteeID == "C00280743"| CommitteeID == "C00442996"| CommitteeID == "C00375790"| CommitteeID == "C00250753"| CommitteeID == "C00193177"| CommitteeID == "C00355677"| CommitteeID == "C00587451"| CommitteeID == "C30003057"
+                            | CommitteeID == "C00528026"| CommitteeID == "C00435024"| CommitteeID == "C00274944"| CommitteeID == "C00002089"| CommitteeID == "C00495481"| CommitteeID == "C00035535"| CommitteeID == "C00375048"| CommitteeID == "C00387555"| CommitteeID == "C00391490"| CommitteeID == "C00498865"| CommitteeID == "C00007880"| CommitteeID == "C00150805"| CommitteeID == "C00262295"
+                            | CommitteeID == "C00001388"| CommitteeID == "C00744151"| CommitteeID == "C00503318"| CommitteeID == "C00452144"| CommitteeID == "C00783332"| CommitteeID == "C00030734"| CommitteeID == "C00103937"| CommitteeID == "C00095869"| CommitteeID == "C00548198"| CommitteeID == "C00193433"| CommitteeID == "C00458257"| CommitteeID == "C00702092"| CommitteeID == "C00439216"
+                            | CommitteeID == "C00442020"| CommitteeID == "C00471540"| CommitteeID == "C00452383"| CommitteeID == "C00193631"| CommitteeID == "C00164848"| CommitteeID == "C00085910"| CommitteeID == "C00373910"| CommitteeID == "C00278101"| CommitteeID == "C00486498"| CommitteeID == "C00453399"| CommitteeID == "C00235853"| CommitteeID == "C00466813"| CommitteeID == "C00787374"
+                            | CommitteeID == "C00032698"| CommitteeID == "C00332031"| CommitteeID == "C00508309"| CommitteeID == "C00419036"| CommitteeID == "C00144154"| CommitteeID == "C00027359"| CommitteeID == "C00007542"| CommitteeID == "C00457226"| CommitteeID == "C00005157"| CommitteeID == "C00027342"| CommitteeID == "C00217638"| CommitteeID == "C00128231"| CommitteeID == "C00383521"
+                            | CommitteeID == "C00084491"| CommitteeID == "C00387928"| CommitteeID == "C00000885"| CommitteeID == "C00116145"| CommitteeID == "C00007922"| CommitteeID == "C00217984"| CommitteeID == "C00252940"| CommitteeID == "C00520056"| CommitteeID == "C00043463"| CommitteeID == "C00389882"| CommitteeID == "C00241398"| CommitteeID == "C00291799"| CommitteeID == "C00319319"
+                            | CommitteeID == "C00004812"| CommitteeID == "C00139519"| CommitteeID == "C00079541"| CommitteeID == "C00607861"| CommitteeID == "C00238725"| CommitteeID == "C00113241"| CommitteeID == "C00528166"| CommitteeID == "C00481200"| CommitteeID == "C00431981"| CommitteeID == "C00022368"| CommitteeID == "C00126763"| CommitteeID == "C00415372"| CommitteeID == "C00040659"
+                            | CommitteeID == "C00283135"| CommitteeID == "C00000901"| CommitteeID == "C00420000"| CommitteeID == "C00254201"| CommitteeID == "C00170258"| CommitteeID == "C00092957"| CommitteeID == "C00303339"| CommitteeID == "C00030718"| CommitteeID == "C00060707"| CommitteeID == "C00349225"| CommitteeID == "C00109306"| CommitteeID == "C00517870"| CommitteeID == "C00484592"
+                            | CommitteeID == "C00319723"| CommitteeID == "C00030809"| CommitteeID == "C00376343"| CommitteeID == "C70000492"| CommitteeID == "C00113811"| CommitteeID == "C00002972"| CommitteeID == "C00101105"| CommitteeID == "C00609966"| CommitteeID == "C00508770"| CommitteeID == "C00039214"| CommitteeID == "C00245548"| CommitteeID == "C00325324"| CommitteeID == "C00304634"
+                            | CommitteeID == "C00542555"| CommitteeID == "C00092247"| CommitteeID == "C00345306"| CommitteeID == "C00763847"| CommitteeID == "C00003764"| CommitteeID == "C00040329"| CommitteeID == "C00111278"| CommitteeID == "C00521096"| CommitteeID == "C00002972"| CommitteeID == "C00090415"| CommitteeID == "C00089458"| CommitteeID == "C00107128"| CommitteeID == "C00004101"
+                            | CommitteeID == "C00150367"| CommitteeID == "C00297739"| CommitteeID == "C00383604"| CommitteeID == "C00239848"| CommitteeID == "C00393769"| CommitteeID == "C00445593"| CommitteeID == "C00021972"| CommitteeID == "C00314617"| CommitteeID == "C00309716"| CommitteeID == "C00457754"| CommitteeID == "C00018028"| CommitteeID == "C00363812"| CommitteeID == "C00648402"
+                            | CommitteeID == "C00112763"| CommitteeID == "C00752352"| CommitteeID == "C00166272"| CommitteeID == "C00633107"| CommitteeID == "C00326256"| CommitteeID == "C00004036"| CommitteeID == "C00457366"| CommitteeID == "C00613521"| CommitteeID == "C00135368"| CommitteeID == "C00325936"| CommitteeID == "C00421982"| CommitteeID == "C00300426"| CommitteeID == "C00126086"
+                            | CommitteeID == "C00332296"| CommitteeID == "C00575654"| CommitteeID == "C00570606"| CommitteeID == "C00475194"| CommitteeID == "C00008268"| CommitteeID == "C00082040"| CommitteeID == "C00631085"| CommitteeID == "C00684258"| CommitteeID == "C00004861"| CommitteeID == "C00012476"| CommitteeID == "C00331918"| CommitteeID == "C00002840"| CommitteeID == "C00002832"
+                            | CommitteeID == "C00040725"| CommitteeID == "C00013342"| CommitteeID == "C00003590"| CommitteeID == "C00755454"| CommitteeID == "C00372441"| CommitteeID == "C90017476"| CommitteeID == "C90016858"| CommitteeID == "C90017872"| CommitteeID == "C90017583"| CommitteeID == "C90011578"| CommitteeID == "C90017807"| CommitteeID == "C00505792"| CommitteeID == "C00488338"
+                            | CommitteeID == "C00157545"| CommitteeID == "C00692806"| CommitteeID == "C00358663"| CommitteeID == "C90013798"| CommitteeID == "C90020843"| CommitteeID == "C00583880"| CommitteeID == "C00595751"| CommitteeID == "C00685693"| CommitteeID == "C00488486"| CommitteeID == "C90015975"| CommitteeID == "C00531814"| CommitteeID == "C90014895"| CommitteeID == "C00572651"
+                            | CommitteeID == "C90020959"| CommitteeID == "C90011693"| CommitteeID == "C00508440"| CommitteeID == "C90009358"| CommitteeID == "C90004185"| CommitteeID == "C90016437"| CommitteeID == "C00488742"| CommitteeID == "C00109819"| CommitteeID == "C00509893"| CommitteeID == "C00623355"| CommitteeID == "C00489799"| CommitteeID == "C00523621"| CommitteeID == "C90011875"
+                            | CommitteeID == "C00483693"| CommitteeID == "C00688945"| CommitteeID == "C00727719"| CommitteeID == "C90013145"| CommitteeID == "C90015322"| CommitteeID == "C00759134"| CommitteeID == "C90013376"| CommitteeID == "C00627372"| CommitteeID == "C00528448"| CommitteeID == "C00489203"| CommitteeID == "C30002851"| CommitteeID == "C30002430"| CommitteeID == "C30002885"
+                            | CommitteeID == "C30001952"| CommitteeID == "C00760686"| CommitteeID == "C30002836"| CommitteeID == "C70005798"| CommitteeID == "C70006358"| CommitteeID == "C30003081"| CommitteeID == "C00030999"| CommitteeID == "C70004569"| CommitteeID == "C70006309"| CommitteeID == "C70004262"| CommitteeID == "C00738674"| CommitteeID == "C30001366"| CommitteeID == "C70002563"
+                            | CommitteeID == "C30000848"| CommitteeID == "C70006432"| CommitteeID == "C70004148"| CommitteeID == "C70001318"| CommitteeID == "C90011313"| CommitteeID == "C30001101"| CommitteeID == "C70006184"| CommitteeID == "C70005152",
+                            select=c(CommitteeID:SubID))
+
+#Need to merge interest group name into this list
+committees2020 <- read.csv("feccommittees20192020.csv") 
+
+#Need to 
+
+contribs2020cmtename<- contribs2020subset %>% 
+  left_join(committees2020, c("CommitteeID" = "CMTE_ID"))
+
+#Also need to join the party affiliation of the contribution recipient
+#Loading the candidates text file with this information
+
+candidates2020 <- read.delim("weball20.txt", sep="|") 
+names(candidates2020) <- c("CAND_ID", "CAND_NAME", "IncumbChallenger", "PartyCode", "PartyAffil", "TotalReceipts", "TransfersFrom", "Disbursements", "TransfersTo", "BeginCash", "EndCash", "CandCont", "CandLoans", "OtherLoans", "CandRepay", "OtherRepay", "DebtsOwedBy", "TotalIndCont", "CandState", "CandDist", "SpecialElect", "PrimaryElect", "RunoffElect", "GeneralElect", "GenElectPercent", "ContribOtherCmtes","ContribPartyCmtes", "CoverageEndDate", "RefundsInd", "RefundsCmtes")
+
+#Now join this file with the master file.
+contribs2020allfields<- contribs2020cmtename %>% 
+  left_join(candidates2020, c("CandidateID" = "CAND_ID"))
+
+#This is the list of contributions that I will use to build the ratios.
+
+#Fixing 24a contributions
+contribs2020fixed24a <- contribs2020allfields%>%
+  mutate(PartyAffil2 = case_when(
+    PartyAffil == "DEM" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "REP" & TransactionType == "24A" ~ "DEM",
+    PartyAffil == "DFL" & TransactionType == "24A" ~ "REP",
+    PartyAffil == "DEM" & TransactionType != "24A" ~ "DEM",
+    PartyAffil == "REP" & TransactionType != "24A" ~ "REP",
+    PartyAffil == "DFL" & TransactionType != "24A" ~ "DEM",
+  ))
+
+#-----------------------------Building Ratios------------------------------------------
+
+table(contribs2020fixed24a$PartyAffil2)
+
+#First, I will subset the data by contributions to Democrats and contributions to Republicans
+contribs2020GOP<- subset(contribs2020fixed24a, PartyAffil2 == "REP",
+                         select=c(CommitteeID:PartyAffil2))
+
+contribs2020Dem<- subset(contribs2020fixed24a, PartyAffil2 == "DEM",
+                         select=c(CommitteeID:PartyAffil2))
+
+givingtotal2020GOP<- group_by(contribs2020GOP, CMTE_NM)%>%
+  summarise(totalGOP = sum(TransactionAmt))
+
+givingtotal2020Dem<- group_by(contribs2020Dem, CMTE_NM)%>%
+  summarise(totalDem = sum(TransactionAmt))
+
+#Now that I have the contribution totals by party, I will join these two dataframes so that I can figure out the ratios
+partyratios2020<- full_join(givingtotal2020GOP, givingtotal2020Dem)
+
+#Need to replaces NAs with 0s
+partyratios2020[is.na(partyratios2020)] <- 0
+
+#Adding a percent Republican field to the file above. Since 100=Republican in my scale, the higher number should indicate more support of Republicans
+partyratios2020<- partyratios2020%>%
+  mutate(partyratios2020, 
+         PercentRepublican = totalGOP/(totalGOP + totalDem),
+         ChamberPercentRepublican = .4735,
+         ChamberDiff = PercentRepublican - ChamberPercentRepublican)
+
+hist(partyratios2020$ChamberDiff)
+
+#Need to export list of PAC ratios to insert unique ID numbers
+write.csv(partyratios2020, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/partyratios2020.csv")
+
+#Had to manipulate the 2016, 2018, and 2020 data by hand to add a unique identifier that would allow for merging in the next step.
+#This part was done outside of R.
+
+#Next, use the Project Vote Smart API and PVSR package to scrape scorecards data from Project Vote Smart Site.
+
+#Loading the Project Vote Smart key
+pvs.key<- ("6684f40efb98413f17a9ffa297a61420")
+
+#Pulling the groups into dataframes by issue
+group<- Rating.getSig(1578)
+groupsbudget<- Rating.getSigList(stateId="NA", 10) 
+groupsmarijuana<- Rating.getSigList(stateId="NA", 101) 
+groupsresources<- Rating.getSigList(stateId="NA", 103) 
+groupsoil<- Rating.getSigList(stateId="NA", 104) 
+groupsreligion<- Rating.getSigList(stateId="NA", 107) 
+groupsconservative<- Rating.getSigList(stateId="NA", 109) 
+groupsbusiness<- Rating.getSigList(stateId="NA", 11) 
+groupsliberal<- Rating.getSigList(stateId="NA", 110) 
+groupstaxes<- Rating.getSigList(stateId="NA", 111) 
+groupselections<- Rating.getSigList(stateId="NA", 12) 
+groupscivil<- Rating.getSigList(stateId="NA", 13) 
+groupslegislative<- Rating.getSigList(stateId="NA", 16) 
+groupsconserv2<- Rating.getSigList(stateId="NA", 17) 
+groupsabortion<- Rating.getSigList(stateId="NA", 2) 
+groupscriminal<- Rating.getSigList(stateId="NA", 20) 
+groupsdefense<- Rating.getSigList(stateId="NA", 22) 
+groupsdrugs<- Rating.getSigList(stateId="NA", 25) 
+groupseducation<- Rating.getSigList(stateId="NA", 27) 
+groupsenergy<- Rating.getSigList(stateId="NA", 29) 
+groupsemployment<- Rating.getSigList(stateId="NA", 3) 
+groupsenvironment<- Rating.getSigList(stateId="NA", 30) 
+groupsfamily<- Rating.getSigList(stateId="NA", 31) 
+groupsforeign<- Rating.getSigList(stateId="NA", 32) 
+groupsgovernment<- Rating.getSigList(stateId="NA", 36) 
+groupsguns<- Rating.getSigList(stateId="NA", 37) 
+groupshealth<- Rating.getSigList(stateId="NA", 38) 
+groupshousing<- Rating.getSigList(stateId="NA", 39) 
+groupsagriculture<- Rating.getSigList(stateId="NA", 4) 
+groupsimmigration<- Rating.getSigList(stateId="NA", 40) 
+groupstechnology<- Rating.getSigList(stateId="NA", 41) 
+groupslabor<- Rating.getSigList(stateId="NA", 43) 
+groupsliberal2<- Rating.getSigList(stateId="NA", 45)
+groupsmilitary<- Rating.getSigList(stateId="NA", 47) 
+groupsanimals<- Rating.getSigList(stateId="NA", 5) 
+groupsscience<- Rating.getSigList(stateId="NA", 52) 
+groupsseniors<- Rating.getSigList(stateId="NA", 53) 
+groupssocial<- Rating.getSigList(stateId="NA", 54) 
+groupstrade<- Rating.getSigList(stateId="NA", 63) 
+groupsveterans<- Rating.getSigList(stateId="NA", 66) 
+groupsunemployed<- Rating.getSigList(stateId="NA", 67) 
+groupsarts<- Rating.getSigList(stateId="NA", 7) 
+groupsfederal<- Rating.getSigList(stateId="NA", 72) 
+groupsgaming<- Rating.getSigList(stateId="NA", 73) 
+groupsreproduction<- Rating.getSigList(stateId="NA", 75) 
+groupsbusiness<- Rating.getSigList(stateId="NA", 78) 
+groupscampaign<- Rating.getSigList(stateId="NA", 79) 
+groupsminors<- Rating.getSigList(stateId="NA", 80) 
+groupsconstitution<- Rating.getSigList(stateId="NA", 81) 
+groupseconomy<- Rating.getSigList(stateId="NA", 82) 
+groupsentitlement<- Rating.getSigList(stateId="NA", 83) 
+groupsfinance<- Rating.getSigList(stateId="NA", 84) 
+groupsfiscal<- Rating.getSigList(stateId="NA", 86) 
+groupsfiscal2<- Rating.getSigList(stateId="NA", 87) 
+groupsfood<- Rating.getSigList(stateId="NA", 88) 
+groupsaid<- Rating.getSigList(stateId="NA", 89) 
+groupsgovernment2<- Rating.getSigList(stateId="NA", 90) 
+groupshighered<- Rating.getSigList(stateId="NA", 93) 
+groupsinfrastructure<- Rating.getSigList(stateId="NA", 97) 
+groupsk12<- Rating.getSigList(stateId="NA", 98) 
+groupslegal<- Rating.getSigList(stateId="NA", 99) 
+
+#Combining all of the dataframes above. Needs to be deduped.
+allgroups<- rbind(groupsabortion, groupsagriculture, groupsaid, groupsanimals, groupsarts, groupsbudget, groupsbusiness, groupscampaign, groupscivil, groupsconserv2, groupsconservative, groupsconstitution, groupscriminal, groupsdefense, groupsdrugs, groupseconomy, groupseducation, groupselections, groupsemployment, groupsenergy, groupsentitlement, groupsenvironment, groupsfamily, groupsfederal, groupsfinance, groupsfiscal, groupsfiscal2, groupsfood, groupsforeign, groupsgaming, groupsgovernment, groupsgovernment2, groupsguns, groupshealth, groupshighered, groupshousing, groupsimmigration, groupsinfrastructure, groupsk12, groupslabor, groupslegal, groupslegislative, groupsliberal, groupsliberal2, groupsmarijuana, groupsmilitary, groupsminors, groupsoil, groupsreligion, groupsreproduction, groupsresources, groupsscience, groupsseniors, groupssocial, groupstaxes, groupstechnology, groupstrade, groupsunemployed, groupsveterans)
+
+#Deduping the file
+allgroupsunique<- allgroups%>% 
+  distinct(sigId, .keep_all = TRUE)
+#This is the file I will use to house the ratings.
+
+#----------------------------------------------------------------------------
+
+#Pulling ratings for each of the officials by state
+
+#Alabama
+ALofficials<- Officials.getByOfficeTypeState("AL", "C")
+ALaderholt<- Rating.getCandidateRating(441, sigId=NULL)
+ALbrooks<-  Rating.getCandidateRating(121610, sigId=NULL)
+ALcarl<- Rating.getCandidateRating(143749, sigId=NULL)
+ALmoore<- Rating.getCandidateRating(121792, sigId=NULL)
+ALpalmer<- Rating.getCandidateRating(146274, sigId=NULL)
+ALrogers<- Rating.getCandidateRating(5705, sigId=NULL)
+ALsewell<- Rating.getCandidateRating(121621, sigId=NULL)
+ALshelby<- Rating.getCandidateRating(53266, sigId=NULL)
+ALtuberville<- Rating.getCandidateRating(	188306, sigId=NULL)
+
+#Alaska
+AKofficials<- Officials.getByOfficeTypeState("AK", "C")
+AKmurkowski<- Rating.getCandidateRating(15841, sigId=NULL)
+AKsullivan<- Rating.getCandidateRating(114964, sigId=NULL)
+AKyoung<- Rating.getCandidateRating(26717, sigId=NULL)
+
+#Arizona
+AZofficials<- Officials.getByOfficeTypeState("AZ", "C")
+AZbiggs<- Rating.getCandidateRating(28088, sigId=NULL)
+AZgallego<- Rating.getCandidateRating(123732, sigId=NULL)
+AZgosar<- Rating.getCandidateRating(123491, sigId=NULL)
+AZgrijalva<- Rating.getCandidateRating(28253, sigId=NULL)
+AZkelly<- Rating.getCandidateRating(190594, sigId=NULL)
+AZkirkpatrick<- Rating.getCandidateRating(28425, sigId=NULL)
+AZlesko<- Rating.getCandidateRating(106483, sigId=NULL)
+AZohalleran<- Rating.getCandidateRating(28499, sigId=NULL)
+AZschweikert<- Rating.getCandidateRating(106387, sigId=NULL)
+AZsinema<- Rating.getCandidateRating(28338, sigId=NULL)
+AZstanton<- Rating.getCandidateRating(72030, sigId=NULL)
+
+#Arkansas
+ARofficials<- Officials.getByOfficeTypeState("AR", "C")
+ARboozman<- Rating.getCandidateRating(27958, sigId=NULL)
+ARcotton<- Rating.getCandidateRating(135651, sigId=NULL)
+ARcrawford<- Rating.getCandidateRating(119208, sigId=NULL)
+ARhill<- Rating.getCandidateRating(146290, sigId=NULL)
+ARwesterman<- Rating.getCandidateRating(119120, sigId=NULL)
+ARwomack<- Rating.getCandidateRating(71815, sigId=NULL)
+
+#California
+CAofficials<- Officials.getByOfficeTypeState("CA", "C")
+CAaguilar<- Rating.getCandidateRating(70114, sigId=NULL)
+CAbarragan<- Rating.getCandidateRating(166270, sigId=NULL)
+CAbass<- Rating.getCandidateRating(28963, sigId=NULL)
+CAbera<- Rating.getCandidateRating(120030, sigId=NULL)
+CAbrownley<- Rating.getCandidateRating(59904, sigId=NULL)
+CAcalvert<- Rating.getCandidateRating(26777, sigId=NULL)
+CAcarbajal<- Rating.getCandidateRating(81569, sigId=NULL)
+CAcardenas<- Rating.getCandidateRating(9754, sigId=NULL)
+CAchu<- Rating.getCandidateRating(16539, sigId=NULL)
+CAcorrea<- Rating.getCandidateRating(9732, sigId=NULL)
+CAcosta<- Rating.getCandidateRating(3577, sigId=NULL)
+CAdesaulnier<- Rating.getCandidateRating(69477, sigId=NULL)
+CAeshoo<- Rating.getCandidateRating(26741 , sigId=NULL)
+CAfeinstein<- Rating.getCandidateRating(53273, sigId=NULL)
+CAgaramendi<- Rating.getCandidateRating(29664, sigId=NULL)
+CAgarcia<- Rating.getCandidateRating(188664, sigId=NULL)
+CAgomez<- Rating.getCandidateRating(138524, sigId=NULL)
+CAharder<- Rating.getCandidateRating(179326, sigId=NULL)
+CAhuffman<- Rating.getCandidateRating(59849, sigId=NULL)
+CAissa<- Rating.getCandidateRating(16553, sigId=NULL)
+CAjacobs<- Rating.getCandidateRating(179414, sigId=NULL)
+CAkhanna<- Rating.getCandidateRating(29473, sigId=NULL)
+CAkim<- Rating.getCandidateRating(151787, sigId=NULL)
+CAlamalfa<- Rating.getCandidateRating(29713, sigId=NULL)
+CAlee<- Rating.getCandidateRating(8315, sigId=NULL)
+CAlevin<- Rating.getCandidateRating(179416, sigId=NULL)
+CAlieu<- Rating.getCandidateRating(1516, sigId=NULL)
+CAlofgren<- Rating.getCandidateRating(21899, sigId=NULL)
+CAlowenthal<- Rating.getCandidateRating(16469, sigId=NULL)
+CAmatsui<- Rating.getCandidateRating(28593, sigId=NULL)
+CAmccarthy<- Rating.getCandidateRating(28918, sigId=NULL)
+CAmcclintock<- Rating.getCandidateRating(9715, sigId=NULL)
+CAmcnerney<- Rating.getCandidateRating(29474, sigId=NULL)
+CAnapolitano<- Rating.getCandidateRating(8393, sigId=NULL)
+CAnunes<- Rating.getCandidateRating(16725, sigId=NULL)
+CAobernolte<- Rating.getCandidateRating(151831, sigId=NULL)
+CApadilla<- Rating.getCandidateRating(59742, sigId=NULL)
+CApanetta<- Rating.getCandidateRating(169078, sigId=NULL)
+CApelosi<- Rating.getCandidateRating(26732, sigId=NULL)
+CApeters<- Rating.getCandidateRating(70351, sigId=NULL)
+CAroybalallard<- Rating.getCandidateRating(26766, sigId=NULL)
+CAruiz<- Rating.getCandidateRating(136407, sigId=NULL)
+CAsanchez<- Rating.getCandidateRating(29674, sigId=NULL)
+CAschiff<- Rating.getCandidateRating(9489, sigId=NULL)
+CAsherman<- Rating.getCandidateRating(142, sigId=NULL)
+CAspeier<- Rating.getCandidateRating(8425, sigId=NULL)
+CAsteel<- Rating.getCandidateRating(157194, sigId=NULL)
+CAswalwell<- Rating.getCandidateRating(129529, sigId=NULL)
+CAtakano<- Rating.getCandidateRating(22337, sigId=NULL)
+CAthompson<- Rating.getCandidateRating(3564, sigId=NULL)
+CAtorres<- Rating.getCandidateRating(71284, sigId=NULL)
+CAvaladao<- Rating.getCandidateRating(120200, sigId=NULL)
+CAvargas<- Rating.getCandidateRating(29100, sigId=NULL)
+CAwaters<- Rating.getCandidateRating(26759, sigId=NULL)
+
+#Colorado
+COofficials<- Officials.getByOfficeTypeState("CO", "C")
+CObennet<- Rating.getCandidateRating(110942, sigId=NULL)
+COboebert<- Rating.getCandidateRating(191290, sigId=NULL)
+CObuck<- Rating.getCandidateRating(125319, sigId=NULL)
+COcrow<- Rating.getCandidateRating(180218, sigId=NULL)
+COdegette<- Rating.getCandidateRating(561, sigId=NULL)
+COhickenlooper<- Rating.getCandidateRating(71547, sigId=NULL)
+COlamborn<- Rating.getCandidateRating(2698, sigId=NULL)
+COneguse<- Rating.getCandidateRating(151075, sigId=NULL)
+COperlmutter<- Rating.getCandidateRating(2653, sigId=NULL)
+
+#Connecticut
+CTofficials<- Officials.getByOfficeTypeState("CT", "C")
+CTblumenthal<- Rating.getCandidateRating(1568, sigId=NULL)
+CTcourtney<- Rating.getCandidateRating(30333, sigId=NULL)
+CTdelauro<- Rating.getCandidateRating(26788, sigId=NULL)
+CThayes<- Rating.getCandidateRating(181744, sigId=NULL)
+CThimes<- Rating.getCandidateRating(106744, sigId=NULL)
+CTlarson<- Rating.getCandidateRating(17188, sigId=NULL)
+CTmurphy<- Rating.getCandidateRating(17189, sigId=NULL)
+
+#Delaware
+DEofficials<- Officials.getByOfficeTypeState("DE", "C")
+DEblunt<- Rating.getCandidateRating(173249, sigId=NULL)
+DEcarper<- Rating.getCandidateRating(22421, sigId=NULL)
+DEcoons<- Rating.getCandidateRating(122834, sigId=NULL)
+
+#Florida
+FLofficials<- Officials.getByOfficeTypeState("FL", "C")
+FLbilirakis<- Rating.getCandidateRating(17318, sigId=NULL)
+FLbuchanan<- Rating.getCandidateRating(66247, sigId=NULL)
+FLcammack<- Rating.getCandidateRating(191306, sigId=NULL)
+FLcastor<- Rating.getCandidateRating(53825, sigId=NULL)
+FLcrist<- Rating.getCandidateRating(24311, sigId=NULL)
+FLdemings<- Rating.getCandidateRating(137637, sigId=NULL)
+FLdeutch<- Rating.getCandidateRating(67151, sigId=NULL)
+FLdiazbalart<- Rating.getCandidateRating(24312, sigId=NULL)
+FLdonalds<- Rating.getCandidateRating(137655, sigId=NULL)
+FLdunn<- Rating.getCandidateRating(166297, sigId=NULL)
+FLfrankel<- Rating.getCandidateRating(8102, sigId=NULL)
+FLfranklin<- Rating.getCandidateRating(191355, sigId=NULL)
+FLgaetz<- Rating.getCandidateRating(117101, sigId=NULL)
+FLgimenez<- Rating.getCandidateRating(81366, sigId=NULL)
+FLlawson<- Rating.getCandidateRating(24263, sigId=NULL)
+FLmast<- Rating.getCandidateRating(166245, sigId=NULL)
+FLmurphy<- Rating.getCandidateRating(173426, sigId=NULL)
+FLposey<- Rating.getCandidateRating(24280, sigId=NULL)
+FLrubio<- Rating.getCandidateRating(1601, sigId=NULL)
+FLrutherford<- Rating.getCandidateRating(172542, sigId=NULL)
+FLsalazar<- Rating.getCandidateRating(182300, sigId=NULL)
+FLscott<- Rating.getCandidateRating(124204, sigId=NULL)
+FLsoto<- Rating.getCandidateRating(67618, sigId=NULL)
+FLsteube<- Rating.getCandidateRating(117248, sigId=NULL)
+FLwaltz<- Rating.getCandidateRating(182261, sigId=NULL)
+FLwasserman<- Rating.getCandidateRating(24301, sigId=NULL)
+FLwebster<- Rating.getCandidateRating(24302, sigId=NULL)
+FLwilson<- Rating.getCandidateRating(17319, sigId=NULL)
+
+#Georgia
+GAofficials<- Officials.getByOfficeTypeState("GA", "C")
+GAallen<- Rating.getCandidateRating(136062, sigId=NULL)
+GAbishop<- Rating.getCandidateRating(178540, sigId=NULL)
+GAbourdeaux<- Rating.getCandidateRating(178540, sigId=NULL)
+GAcarter<- Rating.getCandidateRating(32085, sigId=NULL)
+GAclyde<- Rating.getCandidateRating(189770, sigId=NULL)
+GAferguson<- Rating.getCandidateRating(168132, sigId=NULL)
+GAhice<- Rating.getCandidateRating(122246, sigId=NULL)
+GAjohnson<- Rating.getCandidateRating(68070, sigId=NULL)
+GAloudermilk<- Rating.getCandidateRating(31618, sigId=NULL)
+GAmcbath<- Rating.getCandidateRating(178538, sigId=NULL)
+GAossoff<- Rating.getCandidateRating(176134, sigId=NULL)
+GAdscott<- Rating.getCandidateRating(7826, sigId=NULL)
+GAascott<- Rating.getCandidateRating(11812, sigId=NULL)
+GAtaylorgreene<- Rating.getCandidateRating(189785, sigId=NULL)
+GAwarnock<- Rating.getCandidateRating(189794, sigId=NULL)
+GAwilliams<- Rating.getCandidateRating(176751, sigId=NULL)
+
+#Hawaii
+HIofficials<- Officials.getByOfficeTypeState("HI", "C")
+HIcase<- Rating.getCandidateRating(3422, sigId=NULL)
+HIhirono<- Rating.getCandidateRating(1677, sigId=NULL)
+HIkahele<- Rating.getCandidateRating(167669, sigId=NULL)
+HIschatz<- Rating.getCandidateRating(17852, sigId=NULL)
+
+#Illinois
+ILofficials<- Officials.getByOfficeTypeState("IL", "C")
+ILbost<- Rating.getCandidateRating(6302, sigId=NULL)
+ILbustos<- Rating.getCandidateRating(134964, sigId=NULL)
+ILcasten<- Rating.getCandidateRating(176982, sigId=NULL)
+ILddavis<- Rating.getCandidateRating(233, sigId=NULL)
+ILrdavis<- Rating.getCandidateRating(9622, sigId=NULL)
+ILduckworth<- Rating.getCandidateRating(57442, sigId=NULL)
+ILdurbin<- Rating.getCandidateRating(26847, sigId=NULL)
+ILfoster<- Rating.getCandidateRating(101632, sigId=NULL)
+ILgarcia<- Rating.getCandidateRating(6261, sigId=NULL)
+ILkelly<- Rating.getCandidateRating(33384, sigId=NULL)
+ILkinzinger<- Rating.getCandidateRating(116559, sigId=NULL)
+ILkrishnamoorthi<- Rating.getCandidateRating(117519, sigId=NULL)
+ILlahood<- Rating.getCandidateRating(128760, sigId=NULL)
+ILmiller<- Rating.getCandidateRating(187988, sigId=NULL)
+ILnewman<- Rating.getCandidateRating(177075, sigId=NULL)
+ILquigley<- Rating.getCandidateRating(83310, sigId=NULL)
+ILrush<- Rating.getCandidateRating(26831, sigId=NULL)
+ILschakowsky<- Rating.getCandidateRating(6387, sigId=NULL)
+ILschneider<- Rating.getCandidateRating(134948, sigId=NULL)
+ILunderwood<- Rating.getCandidateRating(177001, sigId=NULL)
+
+#Indiana
+INofficials<- Officials.getByOfficeTypeState("IN", "C")
+INbaird<- Rating.getCandidateRating(86013, sigId=NULL)
+INbanks<- Rating.getCandidateRating(116801, sigId=NULL)
+INbraun<- Rating.getCandidateRating(148564, sigId=NULL)
+INbucshon<- Rating.getCandidateRating(120335, sigId=NULL)
+INcarson<- Rating.getCandidateRating(84917, sigId=NULL)
+INhollingsworth<- Rating.getCandidateRating(167423, sigId=NULL)
+INmrvan<- Rating.getCandidateRating(113775, sigId=NULL)
+INpence<- Rating.getCandidateRating(177876, sigId=NULL)
+INspartz<- Rating.getCandidateRating(178203, sigId=NULL)
+INwalorski<- Rating.getCandidateRating(34205, sigId=NULL)
+INyoung<- Rating.getCandidateRating(120345, sigId=NULL)
+
+#Iowa
+IAofficials<- Officials.getByOfficeTypeState("IA", "C")
+IAaxne<- Rating.getCandidateRating(179226, sigId=NULL)
+IAernst<- Rating.getCandidateRating(128583, sigId=NULL)
+IAfeenstra<- Rating.getCandidateRating(103301, sigId=NULL)
+IAgrassley<- Rating.getCandidateRating(53293, sigId=NULL)
+IAhinson<- Rating.getCandidateRating(168783, sigId=NULL)
+IAmillermeeks<- Rating.getCandidateRating(103294, sigId=NULL)
+
+#Kansas
+KSofficials<- Officials.getByOfficeTypeState("KS", "C")
+KSdavids<- Rating.getCandidateRating(181201, sigId=NULL)
+KSestes<- Rating.getCandidateRating(125031, sigId=NULL)
+KSlaturner<- Rating.getCandidateRating(107024, sigId=NULL)
+KSmann<- Rating.getCandidateRating(125007, sigId=NULL)
+KSmarshall<- Rating.getCandidateRating(172080, sigId=NULL)
+KSmoran<- Rating.getCandidateRating(542, sigId=NULL)
+
+#Kentucky
+KYofficials<- Officials.getByOfficeTypeState("KY", "C")
+KYbarr<- Rating.getCandidateRating(117290, sigId=NULL)
+KYcomer<- Rating.getCandidateRating(35169, sigId=NULL)
+KYguthrie<- Rating.getCandidateRating(18829, sigId=NULL)
+KYmassie<- Rating.getCandidateRating(132068, sigId=NULL)
+KYmcconnell<- Rating.getCandidateRating(53298, sigId=NULL)
+KYpaul<- Rating.getCandidateRating(117285, sigId=NULL)
+KYrogers<- Rating.getCandidateRating(26875, sigId=NULL)
+KYyarmuth<- Rating.getCandidateRating(58579, sigId=NULL)
+
+#Louisiana
+LAofficials<- Officials.getByOfficeTypeState("LA", "C")
+LAcarter<- Rating.getCandidateRating(35462, sigId=NULL)
+LAcassidy<- Rating.getCandidateRating(69494, sigId=NULL)
+LAgraves<- Rating.getCandidateRating(155424, sigId=NULL)
+LAhiggins<- Rating.getCandidateRating(174484, sigId=NULL)
+LAjohnson<- Rating.getCandidateRating(156097, sigId=NULL)
+LAkennedy<- Rating.getCandidateRating(35496, sigId=NULL)
+LAletlow<- Rating.getCandidateRating(195745, sigId=NULL)
+LAscalise<- Rating.getCandidateRating(9026, sigId=NULL)
+
+#Maine
+MEofficials<- Officials.getByOfficeTypeState("ME", "C")
+MEcollins<- Rating.getCandidateRating(379, sigId=NULL)
+MEgolden<- Rating.getCandidateRating(151420, sigId=NULL)
+MEking<- Rating.getCandidateRating(22381, sigId=NULL)
+MEpingree<- Rating.getCandidateRating(6586, sigId=NULL)
+
+#Maryland
+MDofficials<- Officials.getByOfficeTypeState("MD", "C")
+MDbrown<- Rating.getCandidateRating(19344, sigId=NULL)
+MDcardin<- Rating.getCandidateRating(26888, sigId=NULL)
+MDharris<- Rating.getCandidateRating(19157, sigId=NULL)
+MDhoyer<- Rating.getCandidateRating(26890, sigId=NULL)
+MDmfume<- Rating.getCandidateRating(26892, sigId=NULL)
+MDraskin<- Rating.getCandidateRating(65904, sigId=NULL)
+MDruppersberger<- Rating.getCandidateRating(36130, sigId=NULL)
+MDsarbanes<- Rating.getCandidateRating(66575, sigId=NULL)
+MDtrone<- Rating.getCandidateRating(167336, sigId=NULL)
+MDvanhollen<- Rating.getCandidateRating(6098, sigId=NULL)
+
+#Massachusetts
+MAofficials<- Officials.getByOfficeTypeState("MA", "C")
+MAauchincloss<- Rating.getCandidateRating(173832, sigId=NULL)
+MAclark<- Rating.getCandidateRating(35858, sigId=NULL)
+MAkeating<- Rating.getCandidateRating(4743, sigId=NULL)
+MAlynch<- Rating.getCandidateRating(4844, sigId=NULL)
+MAmarkey<- Rating.getCandidateRating(26900, sigId=NULL)
+MAmcgovern<- Rating.getCandidateRating(552, sigId=NULL)
+MAmoulton<- Rating.getCandidateRating(146299, sigId=NULL)
+MAneal<- Rating.getCandidateRating(26895, sigId=NULL)
+MApressley<- Rating.getCandidateRating(122700, sigId=NULL)
+MAtrahan<- Rating.getCandidateRating(182310, sigId=NULL)
+MAwarren<- Rating.getCandidateRating(141272, sigId=NULL)
+
+#Michigan
+MIofficials<- Officials.getByOfficeTypeState("MI", "C")
+MIbergman<- Rating.getCandidateRating(170172, sigId=NULL)
+MIdingell<- Rating.getCandidateRating(152482, sigId=NULL)
+MIhuizenga<- Rating.getCandidateRating(38351, sigId=NULL)
+MIkildee<- Rating.getCandidateRating(136102, sigId=NULL)
+MIlawrence<- Rating.getCandidateRating(78851, sigId=NULL)
+MIlevin<- Rating.getCandidateRating(66287, sigId=NULL)
+MImcclain<- Rating.getCandidateRating(191633, sigId=NULL)
+MImoolenar<- Rating.getCandidateRating(17676, sigId=NULL)
+MIpeters<- Rating.getCandidateRating(8749, sigId=NULL)
+MIslotkin<- Rating.getCandidateRating(181080, sigId=NULL)
+MIstabenow<- Rating.getCandidateRating(515, sigId=NULL)
+MIstevens<- Rating.getCandidateRating(181092, sigId=NULL)
+MItlaib<- Rating.getCandidateRating(105368, sigId=NULL)
+MIupton<- Rating.getCandidateRating(26906, sigId=NULL)
+MIwalberg<- Rating.getCandidateRating(8608, sigId=NULL)
+
+#Minnesota
+MNofficials<- Officials.getByOfficeTypeState("MN", "C")
+MNcraig<- Rating.getCandidateRating(166261, sigId=NULL)
+MNemmer<- Rating.getCandidateRating(38894, sigId=NULL)
+MNfischbach<- Rating.getCandidateRating(3882, sigId=NULL)
+MNhagedorn<- Rating.getCandidateRating(146207, sigId=NULL)
+MNklobuchar<- Rating.getCandidateRating(65092, sigId=NULL)
+MNmccollum<- Rating.getCandidateRating(3812, sigId=NULL)
+MNomar<- Rating.getCandidateRating(171628, sigId=NULL)
+MNphillips<- Rating.getCandidateRating(181357, sigId=NULL)
+MNsmith<- Rating.getCandidateRating(152968, sigId=NULL)
+MNstauber<- Rating.getCandidateRating(159954, sigId=NULL)
+
+#Mississippi
+MSofficials<- Officials.getByOfficeTypeState("MS", "C")
+MSguest<- Rating.getCandidateRating(179667, sigId=NULL)
+MShydesmith<- Rating.getCandidateRating(20784, sigId=NULL)
+MSkelly<- Rating.getCandidateRating(156389, sigId=NULL)
+MSpalazzo<- Rating.getCandidateRating(69521, sigId=NULL)
+MSthompson<- Rating.getCandidateRating(26929, sigId=NULL)
+MSwicker<- Rating.getCandidateRating(21926, sigId=NULL)
+
+#Missouri
+MOofficials<- Officials.getByOfficeTypeState("MO", "C")
+MOblunt<- Rating.getCandidateRating(418, sigId=NULL)
+MObush<- Rating.getCandidateRating(169020, sigId=NULL)
+MOcleaver<- Rating.getCandidateRating(39507, sigId=NULL)
+MOgraves<- Rating.getCandidateRating(9425, sigId=NULL)
+MOhartzler<- Rating.getCandidateRating(8783, sigId=NULL)
+MOhawley<- Rating.getCandidateRating(169716, sigId=NULL)
+MOlong<- Rating.getCandidateRating(123401, sigId=NULL)
+MOleutkemeyer<- Rating.getCandidateRating(20400, sigId=NULL)
+MOsmith<- Rating.getCandidateRating(59318, sigId=NULL)
+MOwagner<- Rating.getCandidateRating(136083, sigId=NULL)
+
+#Montana
+MTofficials<- Officials.getByOfficeTypeState("MT", "C")
+MTdaines<- Rating.getCandidateRating(135720, sigId=NULL)
+MTrosendale<- Rating.getCandidateRating(120815, sigId=NULL)
+MTtester<- Rating.getCandidateRating(20928, sigId=NULL)
+
+#Nebraska
+NEofficials<- Officials.getByOfficeTypeState("NE", "C")
+NEbacon<- Rating.getCandidateRating(166299, sigId=NULL)
+NEfischer<- Rating.getCandidateRating(41963, sigId=NULL)
+NEfortenberry<- Rating.getCandidateRating(41929, sigId=NULL)
+NEsasse<- Rating.getCandidateRating(150182, sigId=NULL)
+NEsmith<- Rating.getCandidateRating(21284, sigId=NULL)
+
+#Nevada
+NVofficials<- Officials.getByOfficeTypeState("NV", "C")
+NVamodei<- Rating.getCandidateRating(12537, sigId=NULL)
+NVcortezmasto<- Rating.getCandidateRating(69579, sigId=NULL)
+NVhorsford<- Rating.getCandidateRating(44064, sigId=NULL)
+NVlee<- Rating.getCandidateRating(169344, sigId=NULL)
+NVrosen<- Rating.getCandidateRating(169471, sigId=NULL)
+NVtitus<- Rating.getCandidateRating(2629, sigId=NULL)
+
+#New Hampshire
+NHofficials<- Officials.getByOfficeTypeState("NH", "C")
+NHhassan<- Rating.getCandidateRating(42552, sigId=NULL)
+NHkuster<- Rating.getCandidateRating(122256, sigId=NULL)
+NHpappas<- Rating.getCandidateRating(42635, sigId=NULL)
+NHshaheen<- Rating.getCandidateRating(1663, sigId=NULL)
+
+#New Jersey
+NJofficials<- Officials.getByOfficeTypeState("NJ", "C")
+NJbooker<- Rating.getCandidateRating(76151, sigId=NULL)
+NJgottheimer<- Rating.getCandidateRating(169202, sigId=NULL)
+NJkim<- Rating.getCandidateRating(179640, sigId=NULL)
+NJmalinowski<- Rating.getCandidateRating(179645, sigId=NULL)
+NJmenendez<- Rating.getCandidateRating(26961, sigId=NULL)
+NJnorcross<- Rating.getCandidateRating(116277, sigId=NULL)
+NJpallone<- Rating.getCandidateRating(26951, sigId=NULL)
+NJpascrell<- Rating.getCandidateRating(478, sigId=NULL)
+NJpayne<- Rating.getCandidateRating(90668, sigId=NULL)
+NJsherrill<- Rating.getCandidateRating(179651, sigId=NULL)
+NJsires<- Rating.getCandidateRating(22510, sigId=NULL)
+NJsmith<- Rating.getCandidateRating(26952, sigId=NULL)
+NJvandrew<- Rating.getCandidateRating(24685, sigId=NULL)
+NJwatsoncoleman<- Rating.getCandidateRating(24799 , sigId=NULL)
+
+#New Mexico
+NMofficials<- Officials.getByOfficeTypeState("NM", "C")
+NMfernandez<- Rating.getCandidateRating(189882, sigId=NULL)
+NMheinrich<- Rating.getCandidateRating(74517, sigId=NULL)
+NMherrell<- Rating.getCandidateRating(121681, sigId=NULL)
+NMlujan<- Rating.getCandidateRating(102842, sigId=NULL)
+NMstansbury<- Rating.getCandidateRating(180789, sigId=NULL)
+
+#New York
+NYofficials<- Officials.getByOfficeTypeState("NY", "C")
+NYbowman<- Rating.getCandidateRating(191205, sigId=NULL)
+NYclarke<- Rating.getCandidateRating(44741, sigId=NULL)
+NYdelgado<- Rating.getCandidateRating(180313, sigId=NULL)
+NYespaillat<- Rating.getCandidateRating(14379, sigId=NULL)
+NYgarbarino<- Rating.getCandidateRating(143103, sigId=NULL)
+NYgillibrand<- Rating.getCandidateRating(65147, sigId=NULL)
+NYhiggins<- Rating.getCandidateRating(23127, sigId=NULL)
+NYjacobs<- Rating.getCandidateRating(59772, sigId=NULL)
+NYjeffries<- Rating.getCandidateRating(55285, sigId=NULL)
+NYjones<- Rating.getCandidateRating(191209, sigId=NULL)
+NYkatko<- Rating.getCandidateRating(152546, sigId=NULL)
+NYmalliotakis<- Rating.getCandidateRating(127929, sigId=NULL)
+NYcmaloney<- Rating.getCandidateRating(26978, sigId=NULL)
+NYpmaloney<- Rating.getCandidateRating(139760, sigId=NULL)
+NYmeeks<- Rating.getCandidateRating(4360, sigId=NULL)
+NYmeng<- Rating.getCandidateRating(69157, sigId=NULL)
+NYmorelle<- Rating.getCandidateRating(4362, sigId=NULL)
+NYnadler<- Rating.getCandidateRating(26980, sigId=NULL)
+NYaoc<- Rating.getCandidateRating(180416, sigId=NULL)
+NYreed<- Rating.getCandidateRating(127046, sigId=NULL)
+NYrice<- Rating.getCandidateRating(127653, sigId=NULL)
+NYschumer<- Rating.getCandidateRating(26976, sigId=NULL)
+NYstefanik<- Rating.getCandidateRating(152539, sigId=NULL)
+NYsouzzi<- Rating.getCandidateRating(92111, sigId=NULL)
+NYtenney<- Rating.getCandidateRating(127668, sigId=NULL)
+NYtonko<- Rating.getCandidateRating(4403, sigId=NULL)
+NYtorres<- Rating.getCandidateRating(161718, sigId=NULL)
+NYvelazquez<- Rating.getCandidateRating(26975, sigId=NULL)
+NYzeldin<- Rating.getCandidateRating(110252, sigId=NULL)
+
+#North Carolina
+NCofficials<- Officials.getByOfficeTypeState("NC", "C")
+NCadams<- Rating.getCandidateRating(5935, sigId=NULL)
+NCbishop<- Rating.getCandidateRating(171489, sigId=NULL)
+NCburr<- Rating.getCandidateRating(21787, sigId=NULL)
+NCbutterfield<- Rating.getCandidateRating(41077, sigId=NULL)
+NCcawthorn<- Rating.getCandidateRating(188527, sigId=NULL)
+NCfoxx<- Rating.getCandidateRating(6051, sigId=NULL)
+NChudson<- Rating.getCandidateRating(136448, sigId=NULL)
+NCmanning<- Rating.getCandidateRating(178304, sigId=NULL)
+NCmchenry<- Rating.getCandidateRating(21031, sigId=NULL)
+NCmurphy<- Rating.getCandidateRating(166135, sigId=NULL)
+NCprice<- Rating.getCandidateRating(119, sigId=NULL)
+NCross<- Rating.getCandidateRating(41560, sigId=NULL)
+NCrouzer<- Rating.getCandidateRating(102964, sigId=NULL)
+NCtillis<- Rating.getCandidateRating(57717, sigId=NULL)
+
+#North Dakota
+NDofficials<- Officials.getByOfficeTypeState("ND", "C")
+NDarmstrong<- Rating.getCandidateRating(139338, sigId=NULL)
+NDcramer<- Rating.getCandidateRating(444, sigId=NULL)
+NDhoeven<- Rating.getCandidateRating(41788, sigId=NULL)
+
+#Ohio
+OHofficials<- Officials.getByOfficeTypeState("OH", "C")
+OHbalderson<- Rating.getCandidateRating(102781, sigId=NULL)
+OHbeatty<- Rating.getCandidateRating(2427, sigId=NULL)
+OHbrown<- Rating.getCandidateRating(27018, sigId=NULL)
+OHchabot<- Rating.getCandidateRating(21790, sigId=NULL)
+OHdavidson<- Rating.getCandidateRating(166760, sigId=NULL)
+OHgibbs<- Rating.getCandidateRating(45466, sigId=NULL)
+OHgonzalez<- Rating.getCandidateRating(178867, sigId=NULL)
+OHjohnson<- Rating.getCandidateRating(120649, sigId=NULL)
+OHjordan<- Rating.getCandidateRating(8158, sigId=NULL)
+OHjoyce<- Rating.getCandidateRating(143052, sigId=NULL)
+OHkaptur<- Rating.getCandidateRating(27016, sigId=NULL)
+OHlatta<- Rating.getCandidateRating(9926, sigId=NULL)
+OHportman<- Rating.getCandidateRating(27008, sigId=NULL)
+OHryan<- Rating.getCandidateRating(45638, sigId=NULL)
+OHturner<- Rating.getCandidateRating(45519, sigId=NULL)
+OHwenstrup<- Rating.getCandidateRating(135326, sigId=NULL)
+
+#Oklahoma
+OKofficials<- Officials.getByOfficeTypeState("OK", "C")
+OKbice<- Rating.getCandidateRating(152294, sigId=NULL)
+OKcole<- Rating.getCandidateRating(46034, sigId=NULL)
+OKhern<- Rating.getCandidateRating(180004, sigId=NULL)
+OKinhofe<- Rating.getCandidateRating(27027, sigId=NULL)
+OKlankford<- Rating.getCandidateRating(124938, sigId=NULL)
+OKlucas<- Rating.getCandidateRating(27032, sigId=NULL)
+OKmullin<- Rating.getCandidateRating(135898, sigId=NULL)
+
+#Oregon
+ORofficials<- Officials.getByOfficeTypeState("OR", "C")
+ORbentz<- Rating.getCandidateRating(102400, sigId=NULL)
+ORblumenauer<- Rating.getCandidateRating(367, sigId=NULL)
+ORbonamici<- Rating.getCandidateRating(59641, sigId=NULL)
+ORdefazio<- Rating.getCandidateRating(27037, sigId=NULL)
+ORmerkley<- Rating.getCandidateRating(23644, sigId=NULL)
+ORschrader<- Rating.getCandidateRating(10813, sigId=NULL)
+ORwyden<- Rating.getCandidateRating(27036, sigId=NULL)
+
+#Pennsylvania
+PAofficials<- Officials.getByOfficeTypeState("PA", "C")
+PAboyle<- Rating.getCandidateRating(47357, sigId=NULL)
+PAcartwright<- Rating.getCandidateRating(136236, sigId=NULL)
+PAcasey<- Rating.getCandidateRating(2541, sigId=NULL)
+PAdean<- Rating.getCandidateRating(136484, sigId=NULL)
+PAdoyle<- Rating.getCandidateRating(21853, sigId=NULL)
+PAevans<- Rating.getCandidateRating(9128, sigId=NULL)
+PAfitzpatrick<- Rating.getCandidateRating(167708, sigId=NULL)
+PAhoulahan<- Rating.getCandidateRating(178893, sigId=NULL)
+PAjoyce<- Rating.getCandidateRating(178911, sigId=NULL)
+PAkeller<- Rating.getCandidateRating(119553, sigId=NULL)
+PAkelly<- Rating.getCandidateRating(119463, sigId=NULL)
+PAlamb<- Rating.getCandidateRating(177656, sigId=NULL)
+PAmeuser<- Rating.getCandidateRating(102438, sigId=NULL)
+PAperry<- Rating.getCandidateRating(59980, sigId=NULL)
+PAreschenthaler<- Rating.getCandidateRating(166004, sigId=NULL)
+PAscanlon<- Rating.getCandidateRating(178890, sigId=NULL)
+PAsmucker<- Rating.getCandidateRating(102454, sigId=NULL)
+PAthompson<- Rating.getCandidateRating(24046, sigId=NULL)
+PAtoomey<- Rating.getCandidateRating(24096, sigId=NULL)
+PAwild<- Rating.getCandidateRating(178895, sigId=NULL)
+
+#Rhode Island
+RIofficials<- Officials.getByOfficeTypeState("RI", "C")
+RIcicilline<- Rating.getCandidateRating(7349, sigId=NULL)
+RIlangevin<- Rating.getCandidateRating(55787, sigId=NULL)
+RIreed<- Rating.getCandidateRating(27060, sigId=NULL)
+RIwhitehouse<- Rating.getCandidateRating(2572, sigId=NULL)
+
+#South Carolina
+SCofficials<- Officials.getByOfficeTypeState("SC", "C")
+SCclyburn<- Rating.getCandidateRating(27066, sigId=NULL)
+SCduncan<- Rating.getCandidateRating(47967, sigId=NULL)
+SCgraham<- Rating.getCandidateRating(21992, sigId=NULL)
+SCmace<- Rating.getCandidateRating(146076, sigId=NULL)
+SCnorman<- Rating.getCandidateRating(47930, sigId=NULL)
+SCrice<- Rating.getCandidateRating(132382, sigId=NULL)
+SCscott<- Rating.getCandidateRating(11940, sigId=NULL)
+SCtimmons<- Rating.getCandidateRating(168923, sigId=NULL)
+SCwilson<- Rating.getCandidateRating(3985, sigId=NULL)
+
+#South Dakota
+SDofficials<- Officials.getByOfficeTypeState("SD", "C")
+SDjohnson<- Rating.getCandidateRating(48307, sigId=NULL)
+SDrounds<- Rating.getCandidateRating(7455, sigId=NULL)
+SDthune<- Rating.getCandidateRating(398, sigId=NULL)
+
+#Tennessee
+TNofficials<- Officials.getByOfficeTypeState("TN", "C")
+TNblackburn<- Rating.getCandidateRating(25186, sigId=NULL)
+TNburchett<- Rating.getCandidateRating(24379, sigId=NULL)
+TNcohen<- Rating.getCandidateRating(24340, sigId=NULL)
+TNcooper<- Rating.getCandidateRating(48891, sigId=NULL)
+TNdesjarlais<- Rating.getCandidateRating(123473, sigId=NULL)
+TNfleischmann<- Rating.getCandidateRating(123456, sigId=NULL)
+TNgreen<- Rating.getCandidateRating(139030, sigId=NULL)
+TNhagerty<- Rating.getCandidateRating(128466, sigId=NULL)
+TNharshbarger<- Rating.getCandidateRating(190524, sigId=NULL)
+TNkustoff<- Rating.getCandidateRating(48997, sigId=NULL)
+TNrose<- Rating.getCandidateRating(180452, sigId=NULL)
+
+#Texas
+TXofficials<- Officials.getByOfficeTypeState("TX", "C")
+TXallred<- Rating.getCandidateRating(177357, sigId=NULL)
+TXarrington<- Rating.getCandidateRating(155685, sigId=NULL)
+TXbabin<- Rating.getCandidateRating(360, sigId=NULL)
+TXbrady<- Rating.getCandidateRating(361, sigId=NULL)
+TXburgess<- Rating.getCandidateRating(50120, sigId=NULL)
+TXcarter<- Rating.getCandidateRating(49296, sigId=NULL)
+TXcastro<- Rating.getCandidateRating(49227, sigId=NULL)
+TXcloud<- Rating.getCandidateRating(177350, sigId=NULL)
+TXcornyn<- Rating.getCandidateRating(15375, sigId=NULL)
+TXcrenshaw<- Rating.getCandidateRating(177270, sigId=NULL)
+TXcruz<- Rating.getCandidateRating(135705, sigId=NULL)
+TXcuellar<- Rating.getCandidateRating(5486, sigId=NULL)
+TXdoggett<- Rating.getCandidateRating(21689, sigId=NULL)
+TXellzey<- Rating.getCandidateRating(147592, sigId=NULL)
+TXescobar<- Rating.getCandidateRating(99345, sigId=NULL)
+TXfallon<- Rating.getCandidateRating(115056, sigId=NULL)
+TXfletcher<- Rating.getCandidateRating(177031, sigId=NULL)
+TXgarcia<- Rating.getCandidateRating(49734, sigId=NULL)
+TXgohmert<- Rating.getCandidateRating(50029, sigId=NULL)
+TXgonzales<- Rating.getCandidateRating(188225, sigId=NULL)
+TXgonzalez<- Rating.getCandidateRating(166483, sigId=NULL)
+TXgooden<- Rating.getCandidateRating(116935, sigId=NULL)
+TXgranger<- Rating.getCandidateRating(334, sigId=NULL)
+TXgreen<- Rating.getCandidateRating(49680, sigId=NULL)
+TXjackson<- Rating.getCandidateRating(188325, sigId=NULL)
+TXjacksonlee<- Rating.getCandidateRating(21692, sigId=NULL)
+TXjohnson<- Rating.getCandidateRating(27098, sigId=NULL)
+TXmccaul<- Rating.getCandidateRating(49210, sigId=NULL)
+TXnehls<- Rating.getCandidateRating(188334, sigId=NULL)
+TXpfluger<- Rating.getCandidateRating(188165, sigId=NULL)
+TXroy<- Rating.getCandidateRating(177319, sigId=NULL)
+TXsessions<- Rating.getCandidateRating(288, sigId=NULL)
+TXtaylor<- Rating.getCandidateRating(147737, sigId=NULL)
+TXvanduyne<- Rating.getCandidateRating(79150, sigId=NULL)
+TXveasey<- Rating.getCandidateRating(49671, sigId=NULL)
+TXvela<- Rating.getCandidateRating(137719, sigId=NULL)
+TXweber<- Rating.getCandidateRating(102026, sigId=NULL)
+TXwilliams<- Rating.getCandidateRating(50112, sigId=NULL)
+
+#Utah
+UTofficials<- Officials.getByOfficeTypeState("UT", "C")
+UTcurtis<- Rating.getCandidateRating(123390, sigId=NULL)
+UTlee<- Rating.getCandidateRating(66395, sigId=NULL)
+UTmoore<- Rating.getCandidateRating(191164, sigId=NULL)
+UTowens<- Rating.getCandidateRating(191166, sigId=NULL)
+UTromney<- Rating.getCandidateRating(21942, sigId=NULL)
+UTstewart<- Rating.getCandidateRating(135930, sigId=NULL)
+
+#Vermont
+VTofficials<- Officials.getByOfficeTypeState("VT", "C")
+VTleahy<- Rating.getCandidateRating(53353, sigId=NULL)
+VTsanders<- Rating.getCandidateRating(27110, sigId=NULL)
+VTwelch<- Rating.getCandidateRating(51272, sigId=NULL)
+
+#Virginia
+VAofficials<- Officials.getByOfficeTypeState("VA", "C")
+VAbeyer<- Rating.getCandidateRating(1707, sigId=NULL)
+VAcline<- Rating.getCandidateRating(50959, sigId=NULL)
+VAconnolly<- Rating.getCandidateRating(95078, sigId=NULL)
+VAgood<- Rating.getCandidateRating(190745, sigId=NULL)
+VAgriffith<- Rating.getCandidateRating(5148, sigId=NULL)
+VAkaine<- Rating.getCandidateRating(50772, sigId=NULL)
+VAluria<- Rating.getCandidateRating(179677, sigId=NULL)
+VAmceachin<- Rating.getCandidateRating(8230, sigId=NULL)
+VAscott<- Rating.getCandidateRating(27117, sigId=NULL)
+VAspanberger<- Rating.getCandidateRating(179682, sigId=NULL)
+VAwarner<- Rating.getCandidateRating(535, sigId=NULL)
+VAwexton<- Rating.getCandidateRating(147013, sigId=NULL)
+VAwittman<- Rating.getCandidateRating(58133, sigId=NULL)
+
+#Washington
+WAofficials<- Officials.getByOfficeTypeState("WA", "C")
+WAcantwell<- Rating.getCandidateRating(27122, sigId=NULL)
+WAdelbene<- Rating.getCandidateRating(126272, sigId=NULL)
+WAherrerabeutler<- Rating.getCandidateRating(101907, sigId=NULL)
+WAjayapal<- Rating.getCandidateRating(153141, sigId=NULL)
+WAlarsen<- Rating.getCandidateRating(56231, sigId=NULL)
+WAmcmorrisrodgers<- Rating.getCandidateRating(3217, sigId=NULL)
+WAmurray<- Rating.getCandidateRating(53358, sigId=NULL)
+WAnewhouse<- Rating.getCandidateRating(51522, sigId=NULL)
+WAschrier<- Rating.getCandidateRating(181124, sigId=NULL)
+WAsmith<- Rating.getCandidateRating(845, sigId=NULL)
+WAstrickland<- Rating.getCandidateRating(80596, sigId=NULL)
+
+#West Virginia
+WVofficials<- Officials.getByOfficeTypeState("WV", "C")
+WVcapito<- Rating.getCandidateRating(11701, sigId=NULL)
+WVmanchin<- Rating.getCandidateRating(7547, sigId=NULL)
+WVmckinley<- Rating.getCandidateRating(117396, sigId=NULL)
+WVmiller<- Rating.getCandidateRating(52123, sigId=NULL)
+WVmooney<- Rating.getCandidateRating(145943, sigId=NULL)
+
+#Wisconsin
+WIofficials<- Officials.getByOfficeTypeState("WI", "C")
+WIbaldwin<- Rating.getCandidateRating(3470, sigId=NULL)
+WIfitzgerald<- Rating.getCandidateRating(3446, sigId=NULL)
+WIgallagher<- Rating.getCandidateRating(171843, sigId=NULL)
+WIgrothman<- Rating.getCandidateRating(3493, sigId=NULL)
+WIjohnson<- Rating.getCandidateRating(126217, sigId=NULL)
+WIkind<- Rating.getCandidateRating(630, sigId=NULL)
+WImoore<- Rating.getCandidateRating(3457, sigId=NULL)
+WIpocan<- Rating.getCandidateRating(26238, sigId=NULL)
+WIsteil<- Rating.getCandidateRating(181289, sigId=NULL)
+WItiffany<- Rating.getCandidateRating(51831, sigId=NULL)
+
+#Wyoming
+WYofficials<- Officials.getByOfficeTypeState("WY", "C")
+WYbarrasso<- Rating.getCandidateRating(52662, sigId=NULL)
+WYcheney<- Rating.getCandidateRating(171319, sigId=NULL)
+WYlummis<- Rating.getCandidateRating(15546, sigId=NULL)
+
+#Putting all of these ratings into one huge dataframe
+
+allratings<- rbind(AKmurkowski, AKsullivan, AKyoung, 
+                   ALaderholt, ALbrooks, ALpalmer, ALrogers, ALsewell, ALshelby, 
+                   ARboozman, ARcotton, ARcrawford, ARhill, ARwesterman, ARwomack, 
+                   AZgallego, AZgosar, AZgrijalva, AZlesko, AZschweikert, AZstanton,
+                   CAaguilar, CAbarragan, CAbass, CAbera, CAbrownley, CAcalvert, CAcarbajal, CAcardenas, CAcardenas, CAchu, CAcorrea, CAcosta, CAdesaulnier, CAeshoo, CAfeinstein, CAgaramendi, CAgarcia, CAgomez, CAharder, CAhuffman, CAissa, CAkhanna, CAlamalfa, CAlee, CAlevin, CAlieu, CAlofgren, CAlowenthal, CAmatsui, CAmccarthy, CAmcclintock, CAmcnerney, CAnapolitano, CAnunes, CApanetta, CApelosi, CApeters, CAroybalallard, CAruiz, CAsanchez, CAschiff, CAsherman, CAspeier, CAswalwell, CAtakano, CAthompson, CAtorres, CAvaladao, CAvargas, CAwaters,
+                   CObennet, CObuck, COcrow, COdegette, COlamborn, COneguse, COperlmutter, 
+                   CTblumenthal, CTcourtney, CTdelauro, CThayes, CThimes, CTlarson, CTmurphy,
+                   DEblunt, DEcarper, DEcoons,
+                   FLbilirakis, FLbuchanan, FLcastor, FLcrist, FLdemings, FLdeutch, FLdiazbalart, FLdunn, FLfrankel, FLgaetz, FLlawson, FLmast, FLmurphy, FLposey, FLrubio, FLrutherford, FLscott, FLsoto, FLsteube, FLwaltz, FLwasserman, FLwebster, FLwilson,
+                   GAallen, GAascott, GAcarter, GAdscott, GAferguson, GAhice, GAjohnson, GAloudermilk, GAmcbath,  
+                   HIcase, HIhirono, HIschatz,
+                   IAaxne, IAernst, IAgrassley,  
+                   ILbaird, ILbanks, ILbost, ILbraun, ILbustos, ILcasten, ILddavis, ILduckworth, ILdurbin, ILfoster, ILgarcia, ILkelly, ILkinzinger, ILkrishnamoorthi, ILlahood, ILquigley, ILrdavis, ILrush, ILschakowsky, ILschneider, ILunderwood, 
+                   INbaird, INbanks, INbraun, INbucshon, INcarson, INhollingsworth, INpence, INwalorski, INyoung, 
+                   KSdavids, KSestes, KSmarshall, KSmoran, 
+                   KYbarr, KYcomer, KYguthrie, KYmassie, KYmcconnell, KYpaul, KYrogers, KYyarmuth, 
+                   LAcassidy, LAgraves, LAhiggins, LAjohnson, LAkennedy, LAscalise,
+                   MAclark, MAkeating, MAlynch, MAmarkey, MAmcgovern, MAmoulton, MAneal, MApressley, MAtrahan, MAwarren,
+                   MDbrown, MDcardin, MDharris, MDhoyer, MDmfume, MDraskin, MDruppersberger, MDsarbanes, MDtrone, MDvanhollen,
+                   MEcollins, MEgolden, MEking, MEpingree, 
+                   MIbergman, MIdingell, MIhuizenga, MIkildee, MIlawrence, MIlevin, MIpeters, MIslotkin, MIstabenow, MIstevens, MItlaib, MIupton, 
+                   MNcraig, MNemmer, MNklobuchar, MNmccollum, MNomar, MNphillips, MNsmith, MNstauber, 
+                   MOblunt, MOcleaver, MOgraves, MOhartzler, MOhawley, MOleutkemeyer, MOlong, MOwagner,
+                   MSguest, MShydesmith, MSkelly, MSpalazzo, MSthompson, MSwicker,
+                   MTdaines, MTtester,
+                   NCadams, NCbishop, NCburr, NCbutterfield, NCfoxx, NChudson, NCmchenry, NCmurphy, NCprice, NCrouzer, NCtillis,
+                   NDarmstrong, NDcramer, NDhoeven, 
+                   NEbacon, NEfischer, NEfortenberry, NEsasse, NEsmith, 
+                   NHhassan, NHkuster, NHpappas, NHshaheen,
+                   NJbooker, NJgottheimer, NJkim, NJmalinowski, NJmenendez, NJnorcross, NJpallone, NJpascrell, NJpayne, NJsherrill, NJsires, NJsmith, NJvandrew, NJwatsoncoleman,
+                   NMheinrich, NMlujan,
+                   NVamodei, NVcortezmasto, NVhorsford, NVlee, NVrosen, NVtitus, 
+                   NYaoc, NYclarke, NYcmaloney, NYdelgado, NYespaillat, NYgillibrand, NYhiggins, NYjacobs, NYjeffries, NYkatko, NYmeeks, NYmeng, NYmorelle, NYnadler, NYpmaloney, NYreed, NYrice, NYschumer, NYsouzzi, NYstefanik, NYtenney, NYtonko, NYvelazquez, NYzeldin,
+                   OHbalderson, OHbeatty, OHbrown, OHchabot, OHdavidson, OHgibbs, OHgonzalez, OHjohnson, OHjordan, OHjoyce, OHkaptur, OHlatta, OHportman, OHryan, OHturner, OHwenstrup, 
+                   OKcole, OKhern, OKinhofe, OKlankford, OKlucas, OKmullin, 
+                   ORblumenauer, ORbonamici, ORdefazio, ORmerkley, ORschrader, ORwyden,
+                   PAboyle, PAcartwright, PAcasey, PAdean, PAdoyle, PAevans, PAfitzpatrick, PAhoulahan, PAjoyce, PAkeller, PAkelly, PAlamb, PAmeuser, PAperry, PAreschenthaler, PAscanlon, PAsmucker, PAthompson, PAtoomey, PAwild, 
+                   RIcicilline, RIlangevin, RIreed, RIwhitehouse,
+                   SCclyburn, SCduncan, SCgraham, SCnorman, SCrice, SCscott, SCtimmons, SCwilson, 
+                   SDjohnson, SDrounds, SDthune, 
+                   TNblackburn, TNburchett, TNcohen, TNcooper, TNdesjarlais, TNfleischmann, TNgreen, TNkustoff, TNrose,
+                   TXallred, TXarrington, TXbabin, TXbrady, TXburgess, TXcarter, TXcastro, TXcloud, TXcornyn, TXcrenshaw, TXcruz, TXcuellar, TXdoggett, TXescobar, TXfletcher, TXgarcia, TXgohmert, TXgonzalez, TXgooden, TXgranger, TXgreen, TXjacksonlee, TXjohnson, TXmccaul, TXroy, TXsessions, TXtaylor, TXveasey, TXvela, TXweber, TXwilliams,
+                   UTcurtis, UTlee, UTromney, UTstewart, 
+                   VAbeyer, VAcline, VAconnolly, VAgriffith, VAkaine, VAluria, VAmceachin, VAscott, VAspanberger, VAwarner, VAwexton, VAwittman, 
+                   VTleahy, VTsanders, VTwelch, 
+                   WAcantwell, WAdelbene, WAherrerabeutler, WAjayapal, WAlarsen, WAmcmorrisrodgers, WAmurray, WAnewhouse, WAschrier, WAsmith,  
+                   WIbaldwin, WIgallagher, WIgrothman, WIjohnson, WIkind, WImoore, WIpocan, WIsteil, WItiffany,
+                   WVcapito, WVmanchin, WVmckinley, WVmiller, WVmooney, 
+                   WYbarrasso, WYcheney, WYlummis)
+
+#That worked! Now I have one ginormous dataframe with all of hte interest group ratings. 
+#I need to add party affiliation to this DF, which comes from the officials tables, which means I need to rbind those, too.
+
+allofficials<- rbind(ALofficials, ARofficials, AZofficials, CAofficials, COofficials, CTofficials, 
+                     DEofficials, FLofficials, GAofficials, HIofficials, IAofficials, ILofficials, INofficials, KSofficials,
+                     KYofficials, LAofficials, MAofficials, MDofficials, MEofficials, MIofficials, MNofficials, MOofficials, 
+                     MSofficials, MTofficials, NCofficials, NDofficials, NEofficials, NHofficials, NJofficials, NMofficials, NVofficials,
+                     NYofficials, OHofficials, OKofficials, ORofficials, PAofficials, RIofficials, SCofficials, SDofficials, 
+                     TNofficials, TXofficials, UTofficials, VAofficials, VTofficials, WAofficials, WIofficials, WVofficials, WYofficials)
+
+#Now I need to add the official's party affiliation to the ratings dataframe
+
+allratings2<- allratings %>% 
+  left_join(allofficials, by = "candidateId")
+
+table(allratings2$officeParties)      
+
+allratings3<- allratings2%>%
+  left_join(allgroupsunique, by="sigId")
+
+allratings3$sigId
+
+#Here is a shorter version of the file that is more usable and has only the data points I need.
+allratingsshorter<- data.frame(allratings3$title.x, allratings3$firstName.x, allratings3$middleName.x, allratings3$lastName.x, allratings3$sigId, allratings3$ratingId, allratings3$rating, allratings3$timespan, allratings3$ratingText, allratings3$ratingName, allratings3$candidateId, allratings3$officeParties, allratings3$name)
+
+#Saving a copy of this data in csv since it took several hours to pull the data piece by piece using the API. I will load this csv from now on when working with these data.
+write.csv(allratingsshorter, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/ratingsshorter.csv")
+
+#Let's check the ratings to make sure they're all scaled the same way.
+head(allratingsshorter)
+
+#The first few ratings appear to be in numeric order. Let's check the class.
+class(allratingsshorter$allratings3.rating)
+allratingsshorter$rating<- as.numeric(allratingsshorter$allratings3.rating)
+
+table(allratingsshorter$rating)
+hist(allratingsshorter$rating)
+
+#It looks like converting the data introduced some NAs as negative numbers. Now I'll clean them up.
+fix_missing <- function(x) {
+  x[x < 0] <- NA 
+  x
+}
+
+allratings <- lapply(allratingsshorter, fix_missing)
+allratings<- as.data.frame(allratings)
+
+#Now I'll rerun the table and histogram to make sure it got fixed.
+table(allratings$rating)
+hist(allratings$rating)
+
+#Now all I need to do is query the mean scorecard grades by party
+
+#I also need to clean up the ratings so that old ratings get cleared out. I will only analyze ratings from the 2019-2020 cycle for this project.
+table(allratings$allratings3.timespan)
+#There's data going back all the way to 1978! Definitely need to clear thoese out, at least for this project.
+
+#I will select data from the 2019, 2019-2020, and 2020 timespans
+allratings20192020<- subset(allratings, allratings3.timespan == "2019" | allratings3.timespan == "2019-2020" | allratings3.timespan == "2020",
+                            select=c(allratings3.title.x:rating))
+
+#Checking for duplicate ratings
+dups<- allratings20192020%>%
+  count(allratings3.ratingId, allratings3.candidateId)%>%
+  filter(n > 1)
+
+#It looks like the data is unique based on a combination of allratings3.ratingId and allratings3.candidateId. 
+#Need to dedupe based on these two fields. Come back and do this later.
+
+allratingsdeduped<-allratings20192020 %>%
+  distinct(allratings3.ratingId, allratings3.candidateId, .keep_all = TRUE)
+
+#Now some more summary stats
+class(allratingsdeduped$rating)
+table(allratingsdeduped$rating)
+mean(allratingsdeduped$rating, na.rm="T")
+hist(allratingsdeduped$rating)
+
+#Now I will try to get mean ratings for each group by party. 
+ratingsGOP<- subset(allratingsdeduped, allratings3.officeParties == "Republican",
+                    select=c(allratings3.title.x:rating))
+
+ratingsDem<- subset(allratingsdeduped, allratings3.officeParties == "Democratic",
+                    select=c(allratings3.title.x:rating))
+
+summarystatsGOP<- group_by(ratingsGOP, allratings3.name)%>%
+  summarise(meanGOP = mean(rating))
+
+summarystatsDem<- group_by(ratingsDem, allratings3.name)%>%
+  summarise(meanDem = mean(rating))
+#Got it!! Yeah!!
+
+#Exporting the R/D data in case something goes wrong
+
+write.csv(summarystatsGOP2, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/summarystatsGOP.csv")
+
+write.csv(summarystatsDem2, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/summarystatsDem.csv")
+
+#Next, I will take the data that I scraped from the API and use it to construct the Scorecard Difference variables.
+
+scorecardsDems<- read.csv("summarystatsDem.csv")
+scorecardsReps<- read.csv("summarystatsGOP.csv")
+
+scorecards<- full_join(scorecardsDems, scorecardsReps, by = "allratings3.name")
+scorecards <- na.omit(scorecards)
+
+scorecards<- scorecards%>%
+  mutate(ScorecardDiff = meanGOP - meanDem)
+
+#Rescaling scorecard difference
+scorecards$ScorecardDiff2<- rescale(scorecards$ScorecardDiff, to = c(-1,1)) 
+
+#Plotting to make sure it worked
+plottest<- ggplot(scorecards, aes(x=ScorecardDiff2, y=ScorecardDiff))+
+  geom_point()+
+  geom_smooth()
+plottest
+
+scorecards<- scorecards%>%
+  mutate(ScorecardDifffolded = abs(ScorecardDiff2))
+
+#Descriptive Statistics
+hist(scorecards$ScorecardDiff2)
+mean(scorecards$ScorecardDiff2)
+median(scorecards$ScorecardDiff2)
+sd(scorecards$ScorecardDiff2)
+
+table(scorecards$ScorecardDiff2)
+
+#Exporting data
+write.csv(scorecards, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/scorecardsdata.csv")
+
+
+#This is where I start with the data that has Unique ID Added:-----------------------------------------
+
+pacratios2016<- read.csv("partyratios2016.csv")
+pacratios2018<- read.csv("partyratios2018.csv")
+pacratios2020 <- read.csv("partyratios2020.csv")
+interestgroups<- read.csv("IGsMeasuredata.csv")
+scorecards2<- read.csv("scorecardsdata.csv")
+
+pacratios2016<- pacratios2016%>%
+  mutate(rename(pacratios2016, ChamberDiff2016 = ChamberDiff))
+
+pacratios2018<- pacratios2018%>%
+  mutate(rename(pacratios2018, ChamberDiff2018 = ChamberDiff))
+
+pacratios2020<- pacratios2020%>%
+  mutate(rename(pacratios2020, ChamberDiff2020 = ChamberDiff))
+
+#Joining the two tables
+IGswithratios<- left_join(interestgroups, pacratios2020, by = "UniqueID")
+IGswithratios2cycles<- left_join(IGswithratios, pacratios2018, by = "UniqueID")
+IGsallcycles<- left_join(IGswithratios2cycles, pacratios2016, by = "UniqueID")
+IGs.Scorecards<- left_join(IGsallcycles, scorecards2, by = "UniqueID")
+
+#Rescaling PAC data
+#Rescaling 2020
+
+IGs.Scorecards$IGParty2020<- rescale(IGs.Scorecards$ChamberDiff2020, to = c(-1,1)) 
+
+class(IGs.Scorecards$IGParty2020)
+#Checking to make sure it worked
+hist(IGs.Scorecards$IGParty2020)
+
+plot1<- ggplot(IGs.Scorecards, aes(x=IGParty2020, y=ChamberDiff2020))+
+  geom_point()+
+  geom_smooth()
+plot1
+
+#Rescaling 2018
+
+IGs.Scorecards$IGParty2018<- rescale(IGs.Scorecards$ChamberDiff2018, to = c(-1,1)) 
+
+#Checking to make sure it worked
+hist(IGs.Scorecards$IGParty2018)
+class(IGs.Scorecards$IGParty2018)
+
+plot2<- ggplot(IGs.Scorecards, aes(x=IGParty2018, y=ChamberDiff2018))+
+  geom_point()+
+  geom_smooth()
+plot2
+
+#Rescaling 2016
+
+IGs.Scorecards$IGParty2016<- rescale(IGs.Scorecards$ChamberDiff2016, to = c(-1,1)) 
+
+#Checking to make sure it worked
+hist(IGs.Scorecards$IGParty2016)
+
+plot3<- ggplot(IGs.Scorecards, aes(x=IGParty2016, y=ChamberDiff2016))+
+  geom_point()+
+  geom_smooth()
+plot3
+
+#Taking the mean of all three cycles to create the final IGParty measure
+IGs.Scorecards<-IGs.Scorecards %>% 
+  mutate(IGs.Scorecards,
+         PPI = (IGParty2016 + IGParty2018 + IGParty2020)/3)
+
+hist(IGs.Scorecards$PPI)
+mean(IGs.Scorecards$PPI, na.rm=TRUE)
+sd(IGs.Scorecards$PPI, na.rm=TRUE)
+
+write.csv(IGs.Scorecards, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/PPIscores.csv")
+
+PPIscores <- read.csv("PPIscores.csv") 
+#Removing NAs
+
+#Adding PPI categories
+
+PPIscores <- PPIscores  %>% 
+  mutate(PPIcategories=case_when(PPI > 0.60 ~ "Most Rep",
+                                 PPI > 0.20 ~ "Slight Rep",
+                                 PPI > -0.20 ~ "Neutral",
+                                 PPI > -0.60 ~ "Slight Dem",
+                                 PPI >= -1.0 ~ "Most Dem"))
+PPIscores$PPIcategories <- factor(PPIscores$PPIcategories, order = TRUE, 
+                                  levels = c("Most Dem", "Slight Dem", "Neutral", "Slight Rep", "Most Rep"))
+
+PPIscores2 <- subset(PPIscores, PPI !="NA")
+
+write.csv(PPIscores2, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/PPIscores2.csv")
+
+OrgsByScore<- PPIscores[order(PPIscores$PPI),]
+OrgsByScore2<- OrgsByScore[c(3, 61)]
+OrgsByScore2 <- na.omit(OrgsByScore2)
+
+write.csv(OrgsByScore2, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/OrgsByScore2.csv")
+
+
+#Some final cleanup
+
+PPIscores.final <- read.csv("PPIscores2.csv") 
+
+PPIscores.final<- PPIscores.final%>%
+  mutate(PPIfolded = abs(PPI))
+
+PPIscores.final$Endorses<- as.factor(PPIscores.final$Endorses)
+PPIscores.final<- PPIscores.final%>%
+  mutate(ScorecardsFolded = abs(ScorecardDiff2))
+PPIscores.final$OrgType = as.factor(PPIscores.final$OrgType)
+PPIscores.final$OrgType = relevel(PPIscores.final$OrgType, ref="Professional Association")
+
+PPIscores.final<- PPIscores.final%>%
+  mutate(Endorses2=case_when(Endorses == "No" ~ 0,
+                             Endorses == "Stopped in 2013" ~ 0,
+                             Endorses == "Stopped in 2014" ~ 0,
+                             Endorses == "Stopped in 2016" ~ 0,
+                             Endorses == "Stopped in 2017" ~ 0,
+                             Endorses == "Stopped in 2018" ~ 0,
+                             Endorses == "Yes" ~ 1))
+                             
+
+write.csv(PPIscores.final, "~/Documents/Grad School/Fall 2021 Classes/Final Paper/PPIscores.final.csv")
+
+#Descriptive stats-----------------------------------------------------------------------------
+
+mean(PPIscores.final$PPI)
+median(PPIscores.final$PPI)
+sd(PPIscores.final$PPI)
+
+table(PPIscores.final$PPIcategories)
+
+mean(PPIscores.final$PPIfolded)
+median(PPIscores.final$PPIfolded)
+sd(PPIscores.final$PPIfolded)
+
+table(PPIscores.final$Endorses2)
+
+table(PPIscores.final$ScorecardsFolded)
+
+mean(PPIscores.final$ScorecardDiff2, na.rm="TRUE")
+median(PPIscores.final$ScorecardDiff2, na.rm="TRUE")
+sd(PPIscores.final$ScorecardDiff2, na.rm="TRUE")
+hist(PPIscores.final$ScorecardDiff2)
+table(PPIscores.final$ScorecardsDiff2)
+
+mean(PPIscores.final$ScorecardsFolded, na.rm=T)
+median(PPIscores.final$ScorecardsFolded, na.rm=T)
+sd(PPIscores.final$ScorecardsFolded, na.rm=T)
+
+ScorecardDiffPlot<- ggplot(PPIscores.final, aes(x=ScorecardDiff2))+
+  geom_histogram()
+ScorecardDiffPlot
+
+ScorecardFoldedPlot<- ggplot(PPIscores.final, aes(x=ScorecardsFolded))+
+  geom_histogram()
+ScorecardFoldedPlot
+
+table(PPIscores.final$Scorecards)
+
+ScorecardsPlot<- ggplot(PPIscores.final, aes(x=Scorecards, y=PPIfolded))+
+  geom_boxplot()
+ScorecardsPlot
+
+#There aren't enough groups that have nonpartisan scorecards for this model to work.
+#Try whether they do scorecards at all
+
+
+table(PPIscores.final$OrgType)
+
+OrgTypePlot<- ggplot(PPIscores.final, aes(x=OrgType))+
+  geom_bar()
+OrgTypePlot
+
+#Models----------------------------------------------------------------------------------------
+
+h1model<- lm(PPIfolded ~ Endorses2, data = PPIscores.final)
+summary(h1model)
+
+h2model<- lm(PPIfolded ~ ScorecardsFolded, data = PPIscores.final)
+summary(h2model)
+
+H2model2<- lm(PPIfolded ~ Scorecards, data = PPIscores.final)
+summary(H2model2)
+
+h3model<- lm(PPIfolded ~ OrgType, data = PPIscores.final)
+summary(h3model)
+
+ fullmodel<- lm(PPIfolded ~ OrgType + Scorecards + Endorses2, data = PPIscores.final)
+summary(fullmodel)
+
+stargazer(h1model, h2model, H2model2, h3model, fullmodel, title="Predictors of Partisan Proximity Index", type = "latex", ci.level=0.95, digits = 2)
+
+#Plots ------------------------------------------------------------------------------------------------------------
+
+#Data manipulation for plotting
+PPIscores.final$Endorses2<- as.factor(PPIscores.final$Endorses2)
+  
+
+h1plot<- ggplot(PPIscores.final, aes(x=Endorses2, y= PPIfolded))+
+  geom_boxplot()
+h1plot
+
+#Also ran the model with the ordinal version of the measure and an ordinal logit
+table(PPIscores.final$Endorses2, PPIscores.final$PPIcategories)
+
+
+#Testing hypothesis 2
+#Adding scorecards data to main file
+
+mean(PPIscores.final$ScorecardDifffolded, na.rm=TRUE)
+median(PPIscores.final$ScorecardDifffolded, na.rm=TRUE)
+sd(PPIscores.final$ScorecardDifffolded, na.rm=TRUE)
+hist(PPIscores.final$ScorecardDifffolded, na.rm=TRUE)
+
+h2plot<- ggplot(PPIscores.final, aes(x=ScorecardsFolded, y= PPIfolded))+
+  geom_point()+
+  geom_smooth()
+h2plot
+
+#There aren't enough groups that have nonpartisan scorecards for this model to work.
+#Try whether they do scorecards at all
+
+h2plot2<- ggplot(PPIscores.final, aes(x=Scorecards, y= PPIfolded))+
+  geom_boxplot()
+h2plot2
+
+#Testing hypothesis 3
+
+
+h3plot<- ggplot(PPIscores.final, aes(x=OrgType, y= PPIfolded))+
+  geom_boxplot()
+h3plot
+
+table(PAIscores.scorecards$OrgType)
+
+#Predicted Values plots
+
+install.packages("effects")
+library(effects)
+plot(allEffects(fullmodel))
+plot_model(fullmodel, show.values = TRUE)
+
+#Plot of Group Types and Contribution Amounts
+
+PPIscores.final<- PPIscores.final%>%
+  mutate(Total2020 = totalGOP.x + totalDem.x,
+         Total2020Thousands = Total2020/1000)
+
+OrgBySizeplot<- ggplot(PPIscores.final, aes(x=Total2020Thousands, y=PPI, color=OrgType))+
+  geom_point()+
+  geom_smooth()
+OrgBySizeplot
+
+OrgBySizeplot2<- ggplot(PPIscores.final, aes(x=Total2020Thousands, y=PPIfolded, color=OrgType))+
+  geom_point()+
+  geom_smooth()
+OrgBySizeplot2
+
+#There seem to be some outliers - let's sort by $ to see what's going on
+
+PPIBySize<- PPIscores.final[order(PPIscores.final$Total2020Thousands),]
+
+install.packages("xtable")
+library(xtable)
+OrgsByScore2<- read.csv("OrgsByScore2.csv")
+
+xtable(OrgsByScore2[1:218, ])
+@
+
+\maketitle
+
+\section{Abstract}
+	Prior research suggests that single-issue groups and labor unions have been incorporated into one of the two U.S. party coalitions ~\cite{Karol2015PartyPolitics, Lacombe2021Firepower:Force}. But political scientists have not explored whether other types of groups, including trade associations and professional associations, have been incorporated into the party system. Further, scholars have not identified a method for measuring the proximity of groups to parties. I argue that while some groups are closely aligned with one of the political parties, others choose not to affiliate and fall somewhere in between the two party coalitions. With this project, I develop a novel measure to plot interest groups on a partisan scale. This measure will provide valuable information about a group's strategic goals, membership, and the way it goes about achieving its policy goals. Specifically, the measure will help explain variation in interest group lobbying strategies, and enhance our understanding of interest group member mobilization strategies. Identifying interest groups that have not incorporated into the party system can also serve as a jumping-off point for understanding the role these groups play in depolarizing their members.
+\pagebreak
+\section{Introduction}
+
+	Recent political science research suggests that single-issue groups and labor unions have been incorporated into one of the two major party coalitions. We see evidence of this phenomenon in groups' contribution patterns, changes in endorsements and contribution patterns prior to elections, and communication patterns among groups like the National Rifle Association ~\cite{Grossmann2009PartyNetworks,Karol2019RedBlue,Lacombe2021Firepower:Force}.    
+    \vspace{3mm}
+    
+    Other research suggests that some groups stay intentionally nonpartisan for strategic reasons~\cite{Walker1991MobilizingAmerica}. Participants in the political process see evidence of these tendencies in applied politics. While some groups engage in cues designed to trigger party identity, others reinforce their non-partisan or bipartisan credentials ~\cite{ACOG2021OB-GYNPAC}.  Others publish annual reports that emphasize their PAC's bipartisan giving patterns (A. Adams, personal communication, November 23, 2021). 
+        \vspace{3mm}
+    
+	While these trends have been explored in recent political science literature, there is currently no measure that allows scholars to determine the extent to which an interest group has been incorporated into one of the party's coalitions. This project provides a novel measure that can be used to accomplish the task. 
+           \vspace{3mm}
+           
+	I argue that some groups intentionally refrain from affiliating with one of the party coalitions for strategic reasons. These groups have politically diverse memberships, which prevent the group from favoring one party or the other for fear of alienating a significant portion of the group's members. These unaffiliated groups also prioritize relationships with elected officials on both sides of the aisle so that they can pursue legislative agendas as majority parties shift in Congress. Other groups choose to affiliate with parties in order to achieve their policy goals. During the times their party is in power, these partisan groups score policy wins. When their party is out of power, the groups focus on member engagement and fundraising to prepare for victory in the next election.
+                  \vspace{3mm}
+                  
+	Using PAC contribution data obtained from the Federal Election Commission (FEC), I develop a novel, continuous measure of interest groups' proximity to the political parties called Party Proximity Index (PPI). This measure suggests that groups producing scorecards and endorsing candidates are more likely to be highly partisan than groups that choose not to produce scorecards or engage in political endorsements. Results also suggest that while labor unions and single-issue groups are more likely to be highly partisan, trade associations and professional associations are more likely to be farther from the party coalitions. 
+                           \vspace{3mm}
+                  
+ 	PPI will be useful for future research, allowing scholars to predict the content and tenor of interest group member communication, explain the ways interest groups mobilize members,and contribute to our understanding of the variation in interest group lobbying and political contribution strategies. Prior scholarship has provided insights about the role of highly partisan groups in increased political polarization in the U.S. political system ~\cite{Karol2015PartyPolitics}. Identifying groups that have not been incorporated into the political system can serve as a jumping-off point for understanding the role these groups play in depolarizing their members. 
+                     \vspace{3mm}
+ \vphantom{    
+\section{Literature Review }  }%    
+	 \vphantom{ American political party literature suggests that parties consist of broad networks o f leaders, interest groups, and elected officials ~\cite{Bawn2012APolitics,Cohen2008TheDecides,Schwartz1990TheRepublicans}. Research suggests that businesses, labor unions, and other groups are "intense policy demanders" that play a prominent role in the process of nominating candidates for office in order to achieve policy goals ~\cite{Cohen2008TheDecides}. Many interest groups choose to consistently work with one party in order to achieve these goals ~\cite{Koger2009PartisanNetworks}. 
+     \vspace{3mm}          }%  
+    }%                
+    \vphantom{     Karol (2019) suggests that while labor unions have long been part of the Democratic coalition, environmental groups have more recently been incorporated into the Democratic coalition. Karol identifies this trend in the environmental movement as part of a broader trend in which single-issue groups have become incorporated into one of the party coalitions. Lacombe (2021) finds that the National Rifle Association (NRA) - now a prominent member of the Republican coalition - began as a nonpartisan organization. Scholars have observed a similar pattern with groups on both sides of the abortion debate ~\cite{Adams2016AbortionHttp://www.jstor.org/}. 
+          \vspace{3mm}
+       }%        
+     \vphantom{    Similarly, interest groups scholars observed  that in the late 20th Century, the U.S. interest group universe began to polarize - measured by a group's ability to work with both parties in the White House after the passage of President Johnson's Great Society (Walker 1991). Walker (1991, p. 146) suggests that groups, as they struggle to advance their own programs, are "steadily being drawn into the orbit of one of the two major political parties." Walker acknowledges, however, that some groups are inherently nonpartisan or engage in such a way that they are able to do business with the White House regardless of the party affiliation of its occupant (Walker 1991). 
+         \vspace{3mm}   }%       
+         
+ \vphantom{     There have been some efforts to conceptualize the relationship between interest groups and political parties. Scholars have used a variety of approaches, including Congressional scorecards, candidate endorsements, lobbying data, and political contributions, in attempting to understand party affiliation among interest groups. 
+       \vspace{3mm}  }%    
+       
+ \vphantom{          Scholars have used campaign finance data, available from the FEC, to understand the relationships between groups and parties. From a theoretical perspective, Bawn et al. (2012) discuss the role of political contributions in the interest group/party relationship.  Baker (2018), in her study of the efficacy of Federal PACs, used contributions to one of the national party committees as a proxy for a group's party proximity. ~\cite{Baker2018AreObsolete}
+         \vspace{3mm}  }%  
+       
+  \vphantom{         Karol (2019) uses Congressional scorecard data and political contribution data to demonstrate the relationship between environmental groups and the two U.S. political parties. Using these data, Karol finds that environmental groups have steadily moved from politically nonpartisan to strongly affiliated with the Democratic party. 
+      \vspace{3mm}}%  
+       
+  \vphantom{        Grossman and Dominguez (2009) use endorsements during primary elections, lobbying data, and political campaign contributions designated to general elections in their network analysis of interest group coalitions. These scholars suggest that groups work with a diverse set of legislators when working towards legislative goals and with legislators from a single party when working towards electoral goals.
+          \vspace{3mm}}%  
+  
+  \vphantom{      Crosson et al. discuss the use of interest group lobbying data in analysis of interest group preferences. These scholars suggest that interest group lobbying meetings, aggregated by the party of the office visited, might be used to understand the partisan leanings of organizations. ~\cite{Crosson2021ResourcesAhead} Prior studies suggest that lobbyists tend to meet with friendly offices, which supports this idea ~\cite{Bauer1964AmericanTrade}. 
+        \vspace{3mm}}%                
+\section{A Theory of Interest Group Party Proximity}
+Scholars have established that single-issue groups and labor unions have been incorporated into one of the two political parties (Karol 2019, Lacombe 2021). Research also suggests that there are degrees of affiliation, with some groups closer to political parties than others (Walker 1991). There is currently no way to evaluate interest groups to determine how close they are to one of the political parties. This project addresses that need by developing a continuous variable that allows scholars to measure an interest group's distance from one of the political parties. I argue that a group's proximity to one of the political parties can provide valuable information about a group's strategic goals, membership, and the way it goes about achieving its policy goals.
+   \vspace{3mm}
+   
+   I expect that there will be a significant number of interest groups that choose not to affiliate with a party. There are two primary reasons that a group would make this choice. First, some groups make a strategic decision to build relationships with legislators on both sides of the aisle. This strategy allows the groups to pursue their policy priorities as party majorities shift in Congress and the presidency changes hands from Democrat to Republican. 
+      \vspace{3mm}
+      
+      A number of professional and trade associations engage in this practice. For example, the American Medical Association (AMA) has several priority issues championed by members of both parties. The No Surprises Act, a bill that would restrict surprise billing from hospitals and was included in the 2021 Omnibus Appropriations Act, was sponsored by Reps. Frank Pallone (D-NJ) and Dave Walden ~\cite{Pallone2019H.R.Act}. The AMA also advocates for updating the Medicare payment schedule. The effort is led by Reps. Ami Berra (D-CA) and Larry Buschon (R-IN) - both of whom are physicians in Congress ~\cite{Robezneiks2021SolidCliff}. Securing support for these efforts from both sides of the aisle ensures that these issues, which are often left unresolved during a session of Congress, can have a chance at passage when Congress switches hands.
+ \vspace{3mm}
+ 
+ Interest groups also pursue bipartisan approaches due to member retention concerns. Many professional and trade associations have politically diverse memberships ~\cite{Adamy2019DoctorsDemocrats}. Working exclusively with one side of the aisle or the other runs the risk of alienating a large portion of the group's membership. For example, one large professional association's membership consists of a large majority of older, white, male military retirees. As we might expect, over half are Republicans, but 17 percent of them are Democrats. Another large professional association with a more demographically diverse membership is located in a deep blue state. Despite this fact, the group's membership is fairly balanced, with 37 percent Republicans, 33 percent Democrats, and 29 percent other or unaffiliated.
+  \vspace{3mm}
+  
+  This cross-cuttingness will cause an organization to maintain relationships with legislators on both sides of the aisle, even when a group's legislative priorities might lean toward one party or the other. One of the top questions PAC directors receive from potential donors is the partisan lean of their organization (personal conversation, A. Adams, November 23, 2021). In fact, PAC directors are so accustomed to receiving these inquiries from their Democratic and Republican members that many include party split data - comparing a PAC's contribution percentages to Democrats and Republicans to the ratio of Democrats and Republicans in the House and Senate during the time of the contribution - in the PAC's annual report (personal conversation, K. Eaton, November 15, 2021) . 
+   \vspace{3mm}
+   
+  I expect groups that choose not to affiliate with political parties will attempt to give evenly to candidates on both sides of the aisle. This strategy enables the groups to build relationships with legislators from both parties, which accomplishes their goal of maintaining membership and achieving legislative goals regardless of party control in government. 
+     \vspace{3mm}
+   
+   Groups that  have been incorporated into one of the party coalitions use a different strategy in accomplishing their policy goals. Karol (2019, p. 68) suggests that "Party-aligned interest groups work within parties to advance their policy goals via candidate selection and lobbying elected officials." Consequently, when an aligned group's party holds the White House or the majority in Congress, the group is able to accomplish its legislative goals. When their party is out of power, the group concentrates its resources on fundraising and organizing so that the party can gain power during the next election. This strategy leads party-aligned groups to contribute almost exclusively to one side of the aisle, since those contributions will support the group's goal of being part of the majority coalition in government. 
+       \vspace{3mm}
+       
+       This theory contrasts with existing theories about interest group behavior in party coalitions. Grossman and Dominguez (2009) suggest that interest groups have separate campaign and legislative goals, which drive groups to engage in different behavior when comparing lobbying and political contributions. I argue that, regardless of a group's proximity to political party, policy goals always drive contribution strategies. In the world of lobbying, campaign support is simply a tool to be used towards the achievement of policy goals.
+              \vspace{3mm}
+              
+\subsection{The Challenge of Measuring an Interest Group's Party Affiliation}
+
+While the above approaches can help us understand pieces of the puzzle, none of them provide a comprehensive look at which groups have affiliated with parties - especially for those that remain politically unaffiliated. 
+        \vspace{3mm}
+
+While endorsement data can help us understand the partisan preferences of groups that endorse, using these data to analyze partisan affiliation provides an incomplete look at the interest group universe. Interest group leaders publish endorsements so that members will reference endorsed candidates when making voting decisions. Further, lists of endorsed candidates serve as signals to the outside world about what types of candidates a group supports. In fact, one prominent professional association stopped endorsing candidates after the 2016 cycle because group leaders believed that the act of endorsing made the group appear more partisan (personal conversation, E. Koeppen, October 29, 2021). 
+        \vspace{3mm}
+
+Other government affairs professionals prefer not to endorse because of the inherent risks involved in associating with a candidate so closely (personal conversation, F. Purcell, October 14, 2021). These risk-averse groups prefer to use financial contributions to signal support instead of public endorsements. As a result, we would expect to see groups more closely affiliated with political parties endorse, while groups farther from the political parties should choose not to endorse. 
+        \vspace{3mm}
+
+Scorecards also provide some promise in helping us understand the link between groups and parties.   Scorecards are documents published by interest group to provide "grades" on a 0-100 scale to legislators according to their votes on key legislation, are an effective way to operationalize a group's incorporation into the Democratic or Republican party when such data are available. However, using scorecards presents a challenge as well. Some groups encounter challenges in finding votes that appropriately represent their organization's policy agenda and have stopped publishing scorecards over the past several years (B. Dame, personal communication, December 2, 2021). Other groups - particularly trade and professional associations -  use scorecard data in order to inform PAC contribution decisions, but do not make the data available to anyone outside of the group's lobbying team (S. Whitworth, personal communication, December 2, 2021).
+        \vspace{3mm}
+        
+  Another challenge with scorecard data is more theoretical in nature. Public scorecards are used as a sort of proxy endorsement for groups that are unable to endorse due to tax status. I expect that these groups will tend to be labor unions and issue advocacy nonprofits - groups that have been increasingly incorporated into the party coalitions. Using scorecard data to predict political affiliation could lead someone to assume that most groups are partisan, when instead, nonpartisan groups simply do not publish scorecards and therefore do not have data available to analyze.
+               \vspace{3mm}
+               
+Meetings with members of Congress can provide some insights about relationships between interest groups and the political parties. However, it is difficult to connect activities with preferences or goals (Crosson et al. 2021). Further complicating matters, since data available through Lobbying Disclsure Act requirements does not provide bill positions, it is difficult to make a direct connection between a lobbying visit and the group's political position. 
+              \vspace{3mm}
+              
+      Political contributions provide a promising way to understand the relationships between interest groups, legislators, and their parties. A plurality of interest groups have Federal PACs, which means that using political contributions allows us to use a fairly large number of groups in each of the organization types of interest. Unlike Congressional meetings data, Federal contribution data allows us to see not just interactions, but statements of support. 
+           \vspace{3mm}
+      
+      It is important to remember that PAC contributions are used to facilitate relationships with legislators as opposed to "winning over" candidates for office. Scholars describe a candidate-centered approach to PAC giving, which accurately reflects the way PAC directors make decisions in the real world ~\cite{Wright2002InterestInfluence}. This incumbent-centered PAC giving philosophy is the approach I use in the current project. 
+      \vspace{3mm}
+                
+         It is important to include a PAC's giving to all committees across an election cycle when intuiting the relationship between group and party. Limiting analysis to a certain election designation or type of committee, for example, does not provide the full context of a PAC's giving and should be avoided.  PAC directors use their budgets for an entire cycle to support their government affairs department's legislative strategies and their collective memberships' interests. For this reason, for each group, I include all political contributions across a given election cycle, including hard money, independent expenditures, contributions to re-elects, leadership PACs, and party committees. This allows me to capture the full picture of interest group party preferences.
+          \vspace{3mm} 
+              
+\subsection{Hypotheses}
+          \vspace{3mm}
+          
+          In order to test the validity of the PPI measure, I use three hypotheses. The first relates to political endorsements. As discussed in Grossman and Dominguez (2009), the candidates a group endorses can provide insights about the party with which the group is aligned. Given the trend of nonpartisan groups away from endorsements, I expect that endorsing groups will be more partisan than groups that do not endorse. 
+       \vspace{3mm}
+       
+ \textit{H1: If PPI accurately reflects an interest group's proximity to one of the political parties, then groups that endorse will have highly partisan PPI scores.}
+       \vspace{3mm}
+       
+       The second hypothesis relates to the use of Congressional scorecards. As with endorsements, examining the scores interest groups give to legislators of the two parties can provide insights about the party proximity of the group. Groups that routinely give members of one party higher scores than members of the other party are likely to be highly partisan. 
+             \vspace{3mm}
+             
+             \textit{H2: If PPI accurately reflects an interest group's proximity to one of the poltiical parties, then the groups that have very different mean scorecard ratings for Republicans and Democrats will have highly partisan PPI scores.}
+             \vspace{3mm}
+             
+   The third hypothesis relates to the likelihood of different types of groups being incorporated into the political parties. Scholars have identified issue advocacy nonprofits and labor unions as the types of groups most likely to have been incorporated into party coalitions (Karol 2019). Scholars also suggest that business-related groups are likely to engage in an incumbent-centered strategy (Wright 2002). Many trade and professional associations intentionally balance their political giving in order to appease members and secure relationships on both sides of the aisle (personal conversation, P. Kirkham, October 6, 2021). 
+                 \vspace{3mm}
+        
+        \textit{H3: If PPI accurately reflects an interest group's proximity to one of the political parties, then trade associations and professional associations will have less partisan PPI scores than issue advocacy nonprofits and labor unions.}
+            \vspace{3mm}
+            
+\section{Method}
+     \vspace{3mm}
+     To measure an interest group's distance from the political parties, I have developed a novel measure called Party Proximity Index (PPI). PPI plots interest groups on a continuous scale from -1 to 1. I use this scale because it is consistent with the scale used for DW-Nominate scores, which seek to measure the proximity of legislators to party leadership ~\cite{Poole2001D-NominateVoting}. Groups closest to the Democratic party will have a PPI approaching -1. Groups closest to the Republican party will have a PPI approaching 1. Groups with a score approaching 0 are equidistant from both parties. 
+          \vspace{3mm}
+          
+          For this project, I use a dataset of 218 interest groups, including professional associations, trade associations, labor unions, and issue advocacy nonprofits active during the 2016, 2018, and 2020 election cycles. All groups have Federal PACs that make contributions to candidates for office. 
+            \vspace{3mm}
+            
+            <<echo = FALSE, cache = TRUE, message=FALSE, warning=FALSE, plot1, fig.height=4, fig.width=4>>=
+
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+PPIscores<- read.csv("PPIscores.final.csv")
+
+#Defending the use of three cycles
+
+#Scatterplot for 2016/2018 cycle
+plotcycle1<- ggplot(PPIscores, aes(x=IGParty2016, y=IGParty2018))+
+  geom_point()+
+  geom_smooth()+
+  labs(x = "Giving by Party 2016 Cycle", y = "Giving by Party 2018",
+ title ="Fig. 1: Giving By Party - 2016 and 2018")
+plotcycle1
+
+plotcycle2<- ggplot(PPIscores, aes(x=IGParty2018, y=IGParty2020))+
+  geom_point()+
+  geom_smooth()+
+  labs(x = "Giving by Party 2018 Cycle", y = "Giving by Party 2020",
+ title ="Fig 2: Giving By Party - 2018 and 2020")
+plotcycle2
+
+plotcycle3<- ggplot(PPIscores, aes(x=IGParty2016, y=IGParty2020))+
+  geom_point()+
+  geom_smooth()+
+  labs(x = "Giving by Party 2016 Cycle", y = "Giving by Party 2020 Cycle",
+ title ="Fig 3: Giving By Party - 2016 and 2020")
+plotcycle3
+@
+         
+          
+          In order to develop PPI, I use data compiled from the Federal Election Commission (FEC). For each interest group in the dataset, I select PAC contributions to all partisan committees, including candidate committees, leadership PACs, and party committees. Hard dollar contributions and independent expenditures are both included in the dataset. I expect that hard dollar contributions may reflect a less partisan approach since those metrics are routinely reported to PAC contributors in annual reports. I provide details on the methods used for collecting these data in Appendix A.
+               \vspace{3mm}
+               
+               For each interest group, I calculate the total dollar amount of PAC contributions to each party during each election cycle. From that total, I determine the percent of those contributions made to Republican candidates. I subtract the percent Republican contributions in the cycle from the percent Republicans in Congress for the cycle in which the contribution was made. Since the maximum and minimum difference values will fluctuate depending upon the percent Republicans in a cycle, I rescale the variable so that there are consistent maximum and minimum values. 
+                 \vspace{3mm}
+               
+               I take the average rescaled differences from the most recent three election cycles (2015-2016, 2017-2018, and 2019-2020). Using three cycles cancels out some of the variation that can happen in reaction to events in a particular Congress.
+                      \vspace{3mm}
+               
+               Figures 1, 2, and 3 demonstrate that even with the changing dynamics that we have seen in the U.S. political system during the six-year period examined, including the election of President Trump and party switches in the U.S. House of Representatives, interest groups display a fair amount of stability when comparing partisan giving and party ratios in Congress. With a few exceptions, a PAC's giving in a previous election cycle appears to be a good predictor of giving in future cycles.
+                 \vspace{3mm}
+
+
+               \vspace{3mm}   
+\subsection{Variables}
+
+\textbf{PPI Index:} The goal of this project is to develop a way of plotting groups based on their proximity to the political parties. I accomplish this goal through the novel measure that I call Party Proximity Index (PPI), which is a continuous variable on a scale of -1 to 1.  The mean PPI score is 0.08, which means the average group falls close to the midpoint of the scale and gives fairly evenly to Democrats and Republicans with a slight Republican lean. The median PPI score is 0.11, which indicates that there are very few outliers in the distribution. The standard deviation for PPI score is 0.54, which means that 68 percent of values on the scale fall between -0.46 and 0.62.    
+
+   \vspace{3mm}  
+   <<echo = FALSE, cache = TRUE, plot4, fig.pos="t", fig.height=4, fig.width=4, fig.cap="">>=
+  
+PPIplot<- ggplot(PPIscores, aes(x=PPI))+
+  geom_histogram(bins = 10)+
+  labs(x = "PPI Scores",
+ title ="Fig 4: Distribution of PPI Scores")
+PPIplot
+  
+  FoldedPPIplot<- ggplot(PPIscores, aes(x=PPIfolded))+
+  geom_histogram(bins = 10)+
+  labs(x = "Folded PPI Scores",
+ title ="Fig 5: Distribution of Folded PPI Scores")
+FoldedPPIplot
+  
+@
+   
+The distribution for PPI index, pictured in Figure 4, indicates that the groups are fairly evenly distributed across the scale. Like mean and median, the modal group is very close to the midpoint of the scale. In examining groups at the poles of the scale, it appears that similar numbers of groups give all of their contributions to Democrats versus Republicans. If the scale were to be broken into five evenly-spaced categories based on their proximity to the parties, 34 groups would be in the most Democratic category (15.59 percent of the sample, scores ranging from -1 to -0.60), 16 would be in the lean Democrat category (17.34 percent of the sample, scores ranging from -0.59 -0.2), 74 would be in the neutral category (33.94 percent of the sample, scores ranging from -0.19 - 0.20), 62 in the lean Republican category (28.44 percent, scores ranging from 0.21 - 0.60), and 32 would be in the most Republican category (14.68 percent of the sample, ranging from 0.61 - 1.0). Examining the categorized data suggests that there are a number of groups that favor the Republican party but try to balance out their giving to appear more neutral. This conforms with conventional wisdom among lobbyists and PAC directors. 
+   \vspace{3mm}   
+   
+   \textbf{Folded PPI:} Since the hypotheses in this project are concerned with level of partisanship regardless of which party is proximal, I created a variable for Folded PPI Index. This variable uses the absolute value of PPI a group's PPI score to determine the group's distance from either the Democratic or Republican party. I use Folded PPI as the dependent variable in each of the hypotheses in this paper. The mean Folded PPI score is 0.43. The median score is 0.35. The Standard Deviation is 0.33, meaning that 68 percent of groups fall within 0.10 and 0.76. in the distribution of the PPI Folded variable in Figure 5, groups with greater distance from the two political parties represent the modal value, with a significant number of groups clustered at the maximum of the range as well. 
+   \vspace{3mm}     
+
+\textbf{Endorses Candidates:} To test Hypothesis 1, I use data aggregated by Project Vote Smart PVS), to create an indicator variable for groups that publicly endorse candidates for office. (Project Vote Smart 2021). Of the 218 groups in the dataset, 47 of the groups endorse (21.56 percent) and 171 groups do not endorse (78.44 percent). 
+   \vspace{3mm}   
+   
+ \textbf{ Scorecard Difference:} The independent variable I use to test Hypothesis 2 involves groups that produce publicly-available scorecards. Using data aggregated by PVS and collected via the PVS API, I create a variable that compares an interest group's mean scorecard rating for Republicans to the group's mean scorecard rating for Democrats (Project Vote Smart 2021). To create this dataset, I included all groups that endorsed candidates during the most recent completed Congress, which included the years 2019 and 2020.  Interest group scorecard ratings were all provided on a scale from 0-100. 
+   \vspace{3mm}   
+   
+      \vspace{3mm}  
+   <<echo = FALSE, cache = TRUE, message=FALSE, warning=FALSE, plot6, fig.pos="t", fig.height=4, fig.width=4, fig.cap="">>=
+   
+ ScorecardDiffPlot<- ggplot(PPIscores, aes(x=ScorecardDiff2))+
+  geom_histogram()+
+  labs(x = "Scorecard Difference",
+ title ="Fig 6: Distribution of Scorecard Differences")
+ScorecardDiffPlot
+
+
+ScorecardFoldedPlot<- ggplot(PPIscores, aes(x=ScorecardsFolded))+
+  geom_histogram()+
+  labs(x="Folded Scorecard Difference", 
+  title="Fig. 7: Distribution of Folded Scorecard Diff.")+
+  xlim(0,1)
+ScorecardFoldedPlot
+
+@
+   
+   To create the Scorecard Difference variable, I calculate an interest group's mean score for Democrats and for Republicans during the period of interest. I then subtract the mean for Democrats from the mean for Republicans to find the Scorecard Difference. I rescale the variable so that the minimum value, representing groups most favoring Democrats, is -1. The maximum, representing the groups most favoring Republicans, is 1. Groups that endorse Democrats and Republicans equally would have a Scorecoard Difference of 0.
+      \vspace{3mm}  
+      
+      The mean value for Scorecard Difference is 0.01, which indicates that the average group is fairly politically neutral. However, there are no groups in the middle of the distribution for this variable, with most groups heavily favoring one party or the other.  The distribution for Scorecard Difference is bimodal, with 12 groups each close to the maximum and minimum of the range. The median value for Scorecard Differences is 0.49. This means that while the mean represents the center of the distribution, the mean value does not represent any of the observed values in the dataset. The standard deviation for Scorecard difference is 0.88, which means that 68 percent of observations fall between -0.87 and 0.89, which nearly spans the distribution of the variable. 
+        \vspace{3mm}  
+  
+\textbf{  Folded Scorecard Difference: } Since hypothesis 2 is concerned with level of partisanship regardless of the party affiliation, I created a variable for Folded Scorecard Difference by using the absolute value for Scorecard Difference. This variable measures an interest group's distance from the party coalitions regardless of the proximal party. The mean value for Folded Scorecard Difference is 0.85, which means the average interest group that issues public scorecards leans heavily towards one of the political parties. The median value of Folded Scorecard Difference is 0.92, which indicates that there is minimal skew in the distribution of the variable. The standard deviation is 0.17, which means that 68 percent of the interest groups fall between 0.68 and the maximum of the range, and that a completely neutral group is more than two standard deviations from the mean. 
+         \vspace{3mm} 
+
+\textbf{Group Type:} Since H3 predicts that interest groups of certain types will engage in more or less partisan behavior, I have created a variable for Interest Group Type. I used information gleaned from each group's website to assign groups to one of four values: labor union, trade association, professional association, and issue advocacy nonprofit. Groups describing themselves as labor unions were coded as such. Groups with institutional members were coded as trade associations. 
+         \vspace{3mm} '
+         
+Groups with individual members that are not labor unions were coded as professional associations. Nonprofit groups engaged in advocacy that did not fit into any of the other three categories were coded as issue advocacy nonprofits. I use the terminology issue advocacy nonprofit in lieu of single-issue groups, which is language preferred by earlier scholars, because some groups are active in a variety of issues. The dataset includes 31 issue advocacy nonprofits (14.22 percent of the sample), 19 labor unions (8.72 percent of the sample), 45 professional associations (20.64 percent of the sample), and 123 trade associations (56.42 percent of the sample). 
+                  \vspace{3mm} 
+                                                     
+\section{Results}
+
+
+\begin{table}[!htbp] \centering 
+  \caption{Predictors of Partisan Proximity Index} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{5}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-6} 
+\\[-1.8ex] & \multicolumn{5}{c}{PPIfolded} \\ 
+\\[-1.8ex] & (1) & (2) & (3) & (4) & (5)\\ 
+\hline \\[-1.8ex] 
+ Endorses2 & 0.53$^{***}$ &  &  &  & 0.32$^{***}$ \\ 
+  & (0.04) &  &  &  & (0.06) \\ 
+  & & & & & \\ 
+ ScorecardsFolded &  & 0.22 &  &  &  \\ 
+  &  & (0.28) &  &  &  \\ 
+  & & & & & \\ 
+ ScorecardsStopped &  &  & 0.23$^{***}$ &  & 0.10$^{**}$ \\ 
+  &  &  & (0.05) &  & (0.05) \\ 
+  & & & & & \\ 
+ ScorecardsYes &  &  & 0.48$^{***}$ &  & 0.16$^{**}$ \\ 
+  &  &  & (0.06) &  & (0.06) \\ 
+  & & & & & \\ 
+ OrgTypeIssue Advocacy Nonprofit &  &  &  & 0.61$^{***}$ & 0.27$^{***}$ \\ 
+  &  &  &  & (0.06) & (0.07) \\ 
+  & & & & & \\ 
+ OrgTypeLabor Union &  &  &  & 0.51$^{***}$ & 0.28$^{***}$ \\ 
+  &  &  &  & (0.07) & (0.08) \\ 
+  & & & & & \\ 
+ OrgTypeTrade Association &  &  &  & 0.15$^{***}$ & 0.14$^{***}$ \\ 
+  &  &  &  & (0.05) & (0.04) \\ 
+  & & & & & \\ 
+ Constant & 0.32$^{***}$ & 0.67$^{**}$ & 0.33$^{***}$ & 0.22$^{***}$ & 0.19$^{***}$ \\ 
+  & (0.02) & (0.24) & (0.02) & (0.04) & (0.04) \\ 
+  & & & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 218 & 25 & 218 & 218 & 218 \\ 
+R$^{2}$ & 0.43 & 0.03 & 0.25 & 0.38 & 0.50 \\ 
+Adjusted R$^{2}$ & 0.42 & $-$0.02 & 0.25 & 0.37 & 0.49 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{5}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+Upon visual inspection of the groups by PPI score, available in Appendix B, the results conform with expectations of people working in public affair and lobbying. Groups earning the most Democratic scores include EMILY's List, Planned Parenthood, The Sierra Club, SEIU, and the United Auto Workers. Groups with the most Republican scores include The Eagle Forum, American Conservative Union, NRA, Susan B. Anthony List, and the National Right to Life Committee. There are a number of trade associations that lean heavily Republican as well, including groups we would expect to see like the U.S. Chamber of Commerce (PPI = 0.67), National Federation of Independent Business (PPI = 0.96), and a number of groups representing building the building trades. A number of prominent trade associations occupy scores closer to the center of the distribution, including the Credit Union National Association (PPI = 0.05), Mortgage Bankers Association (PPI = 0.08), and the Interstate Natural Gas Association (PPI = 0.19). Professional associations tend to occupy the middle of the distribution, including the American Medical Association (PPI = -0.03), American Association of Nurse Practitioners (PPI = -0.03), American Institute of Architects (PPI = 0.05), and National Association of Realtors (PPI = 0.19). 
+  \vspace{3mm}  
+  
+ While a visual inspection suggests that groups are where they should be, there are some notable exceptions that also support the Theory of Party Proximity. While we expect labor unions to be highly partisan, the Airline Pilots Association (PPI = -0.10) and Air Traffic Controllers Association PPI = -0.19) both have fairly neutral PPI scores. Both of these groups have a significant portion of their memberships that are Republican, which requires both groups to employ a bipartisan legislative strategy. The American Nurses Association has a fairly partisan PPI score of -0.49, which is unusual for a professional association. However, prior to 2017, ANA had been a labor union. As a result, the group is in the process of transitioning from a more partisan labor union to a less partisan professional association. We can see from ANA's Chamber Difference scores from 2016 (-0.39), 2018 (-0.35), and 2020 (-0.12) that the group is gradually becoming more politically neutral.
+   \vspace{3mm}  
+
+As observed in the previous section, groups that endorse are more likely to be partisan than those that do not endorse. Therefore, if PPI is an accurate indicator of an interest group's proximity to one of the political parties, then Folded PPI score will be positively correlated with the indicator variable for political endorsements. I test Hypothesis 1 using an OLS regression model with Folded PPI score as the dependent variable and the indicator variable for endorsements as the independent variable. 
+  \vspace{3mm}  
+
+Examining the OLS results in Model 1 of Table 1, we can see that political endorsements have a positive and statistically significant relationship with Folded PPI Index (p<0.01). Adjusted r-square for the model is 0.42, which means that the model explains a good amount of the variation in the dependent variable even with only one variable in the model. 
+       \vspace{3mm}  
+       
+   <<echo = FALSE, cache = TRUE, plot8, fig.pos="t", fig.height=4, fig.width=4, fig.cap="">>=
+   
+   PPIscores$Endorses2<- as.factor(PPIscores$Endorses2)
+   
+h1plot<- ggplot(PPIscores, aes(x=Endorses2, y= PPIfolded))+
+  geom_boxplot()+
+  labs(x="Endorses", y="Folded PPI",  
+  title="Fig. 8: PPI Score by Endorsements")
+h1plot
+@
+
+The model predicts groups that do not endorse will have a mean Folded PPI score of 0.32, while groups that endorse will have a mean Folded PPI score of 0.85. In other words, moving from non-endorsing to endorsing results in an increase of about one standard deviation in Folded PPI score. Referencing Figure 8, which plots observed values of PPI for both endorsing and non-endorsing groups, we can see groups that endorse  have PPI scores among the most partisan of groups in the dataset, while groups that do not endorse are more likely to be politically neutral or leaning slightly toward one or the other party. These findings provide evidence that Folded PPI score has a strong relationship with a group's party proximity.
+    \vspace{3mm} 
+    
+   If PPI is an accurate indicator of an interest group's proximity to one of the political parties, then groups that have a greater difference between mean Republican and Democratic scorecard ratings will be more likely to be highly partisan than groups that have a smaller difference between mean Republican and Democratic scorecard ratings.  I test Hypothesis 2 using an OLS regression model with Folded PPI score as the dependent variable and Folded Scorecard Difference as the independent variable. Examining the OLS results in Model 2 of Table 1, we can see that there is not a statistically significant relationship between Folded Scorecard Difference and Folded PPI score. 
+        \vspace{3mm} 
+    
+    The absence of a relationship here is likely attributable to two factors. First, only 25 out of the 218 groups have a value for Folded Scorecard Difference. A small N in this type of model makes finding statistically significant relationships difficult due to greater errors. Second, finding a statistically-significant relationship is difficult when the independent variable has such little variation in its distribution, as observed in Figure 7. Nearly all of the groups have a highly partisan endorsement pattern, meaning that we can expect less variation in the dependent variable given the data we have for the independent variable. 
+            \vspace{3mm} 
+            
+            While there is no statistically-significant relationship between a group's scorecard scores and party proximity, there is another way to test the validity of PPI using scorecard data. A number of public affairs managers interviewed indicated that scorecards are used by organizations that are unable to endorse due to their tax status but still want to provide guidance to members about candidates to support in elections. Public affairs managers have also witnessed a decrease in the number of nonpartisan groups that produce scorecards over the past several years (personal communication, B. Dame, December 2, 2021).  Further, nonpartisan groups that use scorecards for PAC decision-making purposes typically keep such information private, as to avoid questions about bias by group members. Given the small number of groups that are politically neutral in their scorecards and these statements from interest group leaders, I deduce that groups producing public scorecards can be viewed as a "proxy endorsement." Therefore, groups producing public scorecards should be highly partisan compared to groups that do not produce public scorecards. I also expect groups that formerly produced scorecards and have stopped within the past 10 years to be less partisan than groups that currently produce public scorecards.
+         \vspace{3mm} 
+         
+         I tested this hypothesis using OLS regression with Folded PPI Index as the dependent variable and a categorical variable for public scorecards as the independent variable. Groups are categorized based on their production of a public scorecard. The baseline variable includes groups that have no public scorecard (151 groups, 69.26 percent of the sample). Groups that formerly produced a public scorecard but have eliminated their scorecard over the past 10 years are coded as Scorecards Stopped (39 groups, 17.89 percent of the sample). Groups that have a public scorecard are coded as Scorecards Yes (28 groups, 12.84 percent of the sample).  
+              \vspace{3mm} 
+              
+         Examining the results in Model 3 of Table 1, we can see that both producing scorecard and stopping scorecards have positive and statistically significant relationships with Folded PPI Index (p< 0.01). Groups that have no public scorecard have a predicted Folded PPI score of 0.33. Groups that stopped producing scorecards have a predicted Folded PPI score of 0.56. Groups that produce scorecards have a predicted folded PPI score of 0.81. Adjusted r-square for the model is 0.25, which means that the model explains far less variation in the dependent variable than the endorsements model. Examining the observed values plot in Figure 9, we can see that interest groups that produce public scorecards are more likely to be highly partisan than groups that do not produce public scorecards. The results of this hypothesis suggest that PPI score is a good predictor of an interest group's proximity to one of the political parties.
+                 \vspace{3mm} 
+         
+   <<echo = FALSE, cache = TRUE, plot9, fig.pos="t", fig.height=4, fig.width=4, fig.cap="">>=
+   
+ScorecardsPlot<- ggplot(PPIscores, aes(x=Scorecards, y=PPIfolded))+
+  geom_boxplot()+
+  labs(x="Scorecards", y="Folded PPI",  
+  title="Fig. 9: PPI Scores by Scorecards")
+ScorecardsPlot
+
+@
+       \vspace{3mm} 
+       
+       I test Hypothesis 3 using an OLS regression model with Folded PPI score as the dependent variable and Organization Type as the independent variable. Since it is conventional wisdom among interest group practitioners that professional associations and many trade associations are less partisan than labor unions and issue advocacy nonprofits, I expect to see higher Folded PPI scores among labor unions and issue advocacy nonprofits and lower Folded PPI scores among trade and professional associations. The results in Model 4 of Table 1 indicate that the relationship between Organization Type and Folded PPI score is positive and statistically significant (p<0.01). 
+            \vspace{3mm} 
+
+  <<echo = FALSE, cache = TRUE, plot10, fig.pos="t", fig.height=4, fig.width=4, fig.cap="">>=
+  
+            h3plot<- ggplot(PPIscores, aes(x=OrgType, y= PPIfolded))+
+  geom_boxplot()+
+  labs(x="Organization Type", y="Folded PPI",  
+  title="Fig.10: Folded PPI Scores by Org. Type")+
+   guides(x = guide_axis(n.dodge = 2)) 
+h3plot
+
+@
+
+In terms of substantive significance, the relationship between Folded PPI score and organization type also meets expectations. The baseline value for Organization Type is Professional Association, which the model predicts would have a Folded PPI score of 0.22 - the least partisan of all organization types. Trade Associations are predicted to be slightly more partisan but still fairly neutral with a predicted Folded PPI score of 0.37. Labor unions are expected to have a higher level of proximity to one of the parties with a predicted Folded PPI score of 0.73. Issue advocacy nonprofits are predicted to be the most partisan type of group, with a predicted Folded PPI score of 0.83. In Figure 10, we can see that trade associations and professional associations have lower observed Folded PPI scores than issue advocacy nonprofits and labor unions. 
+      \vspace{3mm} 
+      
+      Model 5 in Table 1 includes a full model with and indicator variable for Endorsements, Stopped Scorecards, Public Scorecards, and Organization Type. Endorsements and Organization Type remain statistically significant (p<0.01 for Endorsements and all Organization Types, p<0.05 for both Scorecard variables). With the results of this model, we can see that the most partisan type of group is a labor union that issues endorsements and produces scorecards (Folded PPI score of 0.95, very close to the top of the range), while the least partisan type of group is a professional organization that neither endorses nor issues a scorecard (Folded PPI score of 0.19, which is relatively neutral). This model has an adjusted r-square of 0.49, which indicates the best fit compared to the other models. I expect that this better model fit is due to Model 5 better explaining the variation in labor unions and trade associations, both of which have a good amount of variation in Folded PPI score. By isolating the labor unions and trade associations that produce scorecards and endorse, we can better predict the partisanship of those types of groups.
+            \vspace{3mm} 
+         
+\section{Discussion}
+
+The model results provide evidence that PPI score is a strong predictor of a group's proximity to one of the U.S. political parties. Groups that engage in partisan activities like endorsements and issuing public scorecards are likely to have highly partisan PPI scores. Labor unions and issue advocacy nonprofits, which scholars suggest have been incorporated into the party organizations, also have highly partisan PPI scores. Evidence suggests that trade and professional organizations are the least partisan groups, although some lean towards one party or the other for strategic reasons. Ultimately, these findings support the theory that groups go about accomplishing their policy goals in different ways - some by affiliating with a political party and others by building relationships with policymakers on both sides of the aisle. 
+            \vspace{3mm} 
+            
+            While these findings are promising, there are some limits to using PPI score to impute partisanship. We are unable to assign scores to groups that do not have Federal PACs. So while the National Farm Bureau Federation, for example, is an influential group in the area of agriculture policy, we are unable to directly assign a PPI score to the group since it has no Federal PAC. We might infer, given the group's rural makeup and status as a trade association, that the group might fall into the "leans Republican" camp, but it is impossible to verify such a guess given the data available. 
+                    \vspace{3mm} 
+                    
+ The findings in this paper also provide promise for future extensions. Given the primacy of policy goals behind a group's partisan lean, we might use PPI score to learn more about lobbying behavior in groups with different partisan dispositions. Scholars can use PPI scores across multiple election cycles to track possible realignment among business groups - a nascent trend that has been identified in media accounts of corporate involvement in politics ~\cite{Ball2021HowTrump}. PPI score can help us understand the strategies different groups use to mobilize members.
+      
+\newpage
+\bibliography{references}  
+\newpage
+
+\section{Appendix A: Data Collection Methods}
+
+I use an original dataset to test the hypotheses in this paper. Variables were collected using the following methods:
+   \vspace{3mm} 
+   
+\textbf{FEC Data: } I collected the PAC contributions variables using bulk data available on the FEC website. I used a text file of all contributions made by registered PACs from the 2016, 2018, and 2020 election cycles. I selected each PAC by its FEC ID number, which I collected by hand to correspond with each interest group in my dataset. Some interest groups had more than one Federal PAC. Others had some combination of PAC, Super PAC, Independent Expenditure Committee, and Electioneering Organization. I used data from all of these committees to compile the data. 
+   \vspace{3mm} 
+   
+Since the bulk contributions file did not include organization name, I added this information by joining to a separate text file of FEC-registered committees. Since the bulk contributions data did not include the party identification of the contribution recipient, I added this information by joining a separate file of FEC-registered candidates. Some independent expenditures in the file were made in opposition to candidates. In those cases, which involved disbursements with a Type 24A, I switched the party affiliation of party supported to the opposite party from the party listed in the contributions data. 
+   \vspace{3mm} 
+   
+After the completion of all of this data processing, I was left with two rows for any interest group with more than one FEC-registered committee. Since there is no field on the file that indicates that the committees are associated wtih the same interest group, I merged this information by hand. I completed the process described above three separate times - once for each election cycle analyzed.
+   \vspace{3mm} 
+   
+   \textbf{Endorsements Data:} I created this indicator variable by hand prior to the beginning of this semester.
+      \vspace{3mm} 
+      
+      \textbf{Scorecards Data:} I collected scorecards difference data using the Project Vote Smart API. The API allows users to download information about interest groups by issue, ratings by candidate using a candidate unique identifier assigned by PVS, and elected official information by state. I wrote a series of three queries that pulled this information bit by bit into dataframes. I used the rbind function to compile all interest group ratings into one large dataframe. To add party affiliation to the ratings data, I used rbind to combine all legislator information by state into one large dataframe. I then used a left join to combine the ratings dataframe and the officials dataframe. I used rbind to combine all of the interest groups by issue. Since combined interest groups by issue contained duplicates, I deduped the file using the distinct function. I then performed a left join to combine the large ratings file with the file that contained interest group names. I cleaned up the ratings data by replacing negative numbers with NAs using a function I wrote. I subsetted the ratings data to include ratings from 2019 and 2020. I used the subset function to create separate files for interest group ratings of Republicans and Democrats. I then used the group by function to create a dataframe with the mean ratings by group for both the Democrat and Republican dataframe. 
+    
+
+
+\end{document}
